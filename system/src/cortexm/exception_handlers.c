@@ -40,7 +40,7 @@ Reset_Handler(void)
   {
     asm volatile
     (
-        " ldr     r0,=_start \n"
+        " ldr     r0,=_start \n\r"
         " bx      r0"
         :
         :
@@ -83,31 +83,31 @@ dumpExceptionStack (ExceptionStackFrame* frame,
                 uint32_t cfsr, uint32_t mmfar, uint32_t bfar,
                                         uint32_t lr)
 {
-  trace_printf ("Stack frame:\n");
-  trace_printf (" R0 =  %08X\n", frame->r0);
-  trace_printf (" R1 =  %08X\n", frame->r1);
-  trace_printf (" R2 =  %08X\n", frame->r2);
-  trace_printf (" R3 =  %08X\n", frame->r3);
-  trace_printf (" R12 = %08X\n", frame->r12);
-  trace_printf (" LR =  %08X\n", frame->lr);
-  trace_printf (" PC =  %08X\n", frame->pc);
-  trace_printf (" PSR = %08X\n", frame->psr);
-  trace_printf ("FSR/FAR:\n");
-  trace_printf (" CFSR =  %08X\n", cfsr);
-  trace_printf (" HFSR =  %08X\n", SCB->HFSR);
-  trace_printf (" DFSR =  %08X\n", SCB->DFSR);
-  trace_printf (" AFSR =  %08X\n", SCB->AFSR);
+  trace_printf ("Stack frame:\n\r");
+  trace_printf (" R0 =  %08X\n\r", frame->r0);
+  trace_printf (" R1 =  %08X\n\r", frame->r1);
+  trace_printf (" R2 =  %08X\n\r", frame->r2);
+  trace_printf (" R3 =  %08X\n\r", frame->r3);
+  trace_printf (" R12 = %08X\n\r", frame->r12);
+  trace_printf (" LR =  %08X\n\r", frame->lr);
+  trace_printf (" PC =  %08X\n\r", frame->pc);
+  trace_printf (" PSR = %08X\n\r", frame->psr);
+  trace_printf ("FSR/FAR:\n\r");
+  trace_printf (" CFSR =  %08X\n\r", cfsr);
+  trace_printf (" HFSR =  %08X\n\r", SCB->HFSR);
+  trace_printf (" DFSR =  %08X\n\r", SCB->DFSR);
+  trace_printf (" AFSR =  %08X\n\r", SCB->AFSR);
 
   if (cfsr & (1UL << 7))
     {
-      trace_printf (" MMFAR = %08X\n", mmfar);
+      trace_printf (" MMFAR = %08X\n\r", mmfar);
     }
   if (cfsr & (1UL << 15))
     {
-      trace_printf (" BFAR =  %08X\n", bfar);
+      trace_printf (" BFAR =  %08X\n\r", bfar);
     }
-  trace_printf ("Misc\n");
-  trace_printf (" LR/EXC_RETURN= %08X\n", lr);
+  trace_printf ("Misc\n\r");
+  trace_printf (" LR/EXC_RETURN= %08X\n\r", lr);
 }
 
 #endif // defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
@@ -117,17 +117,17 @@ dumpExceptionStack (ExceptionStackFrame* frame,
 void
 dumpExceptionStack (ExceptionStackFrame* frame, uint32_t lr)
 {
-  trace_printf ("Stack frame:\n");
-  trace_printf (" R0 =  %08X\n", frame->r0);
-  trace_printf (" R1 =  %08X\n", frame->r1);
-  trace_printf (" R2 =  %08X\n", frame->r2);
-  trace_printf (" R3 =  %08X\n", frame->r3);
-  trace_printf (" R12 = %08X\n", frame->r12);
-  trace_printf (" LR =  %08X\n", frame->lr);
-  trace_printf (" PC =  %08X\n", frame->pc);
-  trace_printf (" PSR = %08X\n", frame->psr);
-  trace_printf ("Misc\n");
-  trace_printf (" LR/EXC_RETURN= %08X\n", lr);
+  trace_printf ("Stack frame:\n\r");
+  trace_printf (" R0 =  %08X\n\r", frame->r0);
+  trace_printf (" R1 =  %08X\n\r", frame->r1);
+  trace_printf (" R2 =  %08X\n\r", frame->r2);
+  trace_printf (" R3 =  %08X\n\r", frame->r3);
+  trace_printf (" R12 = %08X\n\r", frame->r12);
+  trace_printf (" LR =  %08X\n\r", frame->lr);
+  trace_printf (" PC =  %08X\n\r", frame->pc);
+  trace_printf (" PSR = %08X\n\r", frame->psr);
+  trace_printf ("Misc\n\r");
+  trace_printf (" LR/EXC_RETURN= %08X\n\r", lr);
 }
 
 #endif // defined(__ARM_ARCH_6M__)
@@ -164,7 +164,7 @@ isSemihosting (ExceptionStackFrame* frame, uint16_t opCode)
 #endif
 
 #if defined(OS_DEBUG_SEMIHOSTING_FAULTS)
-      // trace_printf ("sh r0=%d\n", r0);
+      // trace_printf ("sh r0=%d\n\r", r0);
 #endif
 
       switch (r0)
@@ -326,12 +326,12 @@ void __attribute__ ((section(".after_vectors"),weak,naked))
 HardFault_Handler (void)
 {
   asm volatile(
-      " tst lr,#4       \n"
-      " ite eq          \n"
-      " mrseq r0,msp    \n"
-      " mrsne r0,psp    \n"
-      " mov r1,lr       \n"
-      " ldr r2,=HardFault_Handler_C \n"
+      " tst lr,#4       \n\r"
+      " ite eq          \n\r"
+      " mrseq r0,msp    \n\r"
+      " mrsne r0,psp    \n\r"
+      " mov r1,lr       \n\r"
+      " ldr r2,=HardFault_Handler_C \n\r"
       " bx r2"
 
       : /* Outputs */
@@ -373,7 +373,7 @@ HardFault_Handler_C (ExceptionStackFrame* frame __attribute__((unused)),
 #endif
 
 #if defined(TRACE)
-  trace_printf ("[HardFault]\n");
+  trace_printf ("[HardFault]\n\r");
   dumpExceptionStack (frame, cfsr, mmfar, bfar, lr);
 #endif // defined(TRACE)
 
@@ -401,17 +401,17 @@ void __attribute__ ((section(".after_vectors"),weak,naked))
 HardFault_Handler (void)
 {
   asm volatile(
-      " movs r0,#4      \n"
-      " mov r1,lr       \n"
-      " tst r0,r1       \n"
-      " beq 1f          \n"
-      " mrs r0,psp      \n"
-      " b   2f          \n"
-      "1:               \n"
-      " mrs r0,msp      \n"
+      " movs r0,#4      \n\r"
+      " mov r1,lr       \n\r"
+      " tst r0,r1       \n\r"
+      " beq 1f          \n\r"
+      " mrs r0,psp      \n\r"
+      " b   2f          \n\r"
+      "1:               \n\r"
+      " mrs r0,msp      \n\r"
       "2:"
-      " mov r1,lr       \n"
-      " ldr r2,=HardFault_Handler_C \n"
+      " mov r1,lr       \n\r"
+      " ldr r2,=HardFault_Handler_C \n\r"
       " bx r2"
 
       : /* Outputs */
@@ -428,7 +428,7 @@ HardFault_Handler_C (ExceptionStackFrame* frame __attribute__((unused)),
   // faults are fatal and it is not possible to return from the handler.
 
 #if defined(TRACE)
-  trace_printf ("[HardFault]\n");
+  trace_printf ("[HardFault]\n\r");
   dumpExceptionStack (frame, lr);
 #endif // defined(TRACE)
 
@@ -460,12 +460,12 @@ void __attribute__ ((section(".after_vectors"),weak,naked))
 BusFault_Handler (void)
 {
   asm volatile(
-      " tst lr,#4       \n"
-      " ite eq          \n"
-      " mrseq r0,msp    \n"
-      " mrsne r0,psp    \n"
-      " mov r1,lr       \n"
-      " ldr r2,=BusFault_Handler_C \n"
+      " tst lr,#4       \n\r"
+      " ite eq          \n\r"
+      " mrseq r0,msp    \n\r"
+      " mrsne r0,psp    \n\r"
+      " mov r1,lr       \n\r"
+      " ldr r2,=BusFault_Handler_C \n\r"
       " bx r2"
 
       : /* Outputs */
@@ -483,7 +483,7 @@ BusFault_Handler_C (ExceptionStackFrame* frame __attribute__((unused)),
   uint32_t bfar = SCB->BFAR; // Bus Fault Address
   uint32_t cfsr = SCB->CFSR; // Configurable Fault Status Registers
 
-  trace_printf ("[BusFault]\n");
+  trace_printf ("[BusFault]\n\r");
   dumpExceptionStack (frame, cfsr, mmfar, bfar, lr);
 #endif // defined(TRACE)
 
@@ -499,12 +499,12 @@ void __attribute__ ((section(".after_vectors"),weak,naked))
 UsageFault_Handler (void)
 {
   asm volatile(
-      " tst lr,#4       \n"
-      " ite eq          \n"
-      " mrseq r0,msp    \n"
-      " mrsne r0,psp    \n"
-      " mov r1,lr       \n"
-      " ldr r2,=UsageFault_Handler_C \n"
+      " tst lr,#4       \n\r"
+      " ite eq          \n\r"
+      " mrseq r0,msp    \n\r"
+      " mrsne r0,psp    \n\r"
+      " mov r1,lr       \n\r"
+      " ldr r2,=UsageFault_Handler_C \n\r"
       " bx r2"
 
       : /* Outputs */
@@ -537,7 +537,7 @@ UsageFault_Handler_C (ExceptionStackFrame* frame __attribute__((unused)),
 #endif
 
 #if defined(TRACE)
-  trace_printf ("[UsageFault]\n");
+  trace_printf ("[UsageFault]\n\r");
   dumpExceptionStack (frame, cfsr, mmfar, bfar, lr);
 #endif // defined(TRACE)
 

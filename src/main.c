@@ -41,7 +41,9 @@ int main(int argc, char* argv[]) {
 	if (initResult != HAL_OK)
 		trace_printf("Can init failed [%d] with code [%d]\n\r", initResult, can1Bus.ErrorCode);
 
-simpleTest();
+extern void USB_GenericInit(void);
+USB_GenericInit();
+//simpleTest();
 
 	while (true) {
 
