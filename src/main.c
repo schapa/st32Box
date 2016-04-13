@@ -40,7 +40,9 @@ int main(int argc, char* argv[]) {
 	dumpCANProps(&can1Bus);
 	if (initResult != HAL_OK)
 		trace_printf("Can init failed [%d] with code [%d]\n\r", initResult, can1Bus.ErrorCode);
-
+extern void usbDeviceCDC_Init(void);
+	usbDeviceCDC_Init();
+extern void simpleTest(void);
 simpleTest();
 
 	while (true) {
