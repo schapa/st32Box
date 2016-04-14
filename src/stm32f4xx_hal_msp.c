@@ -11,6 +11,7 @@
 static void initGPIO_UARTtrace(void);
 static void initGPIO_UARTclock(void);
 static void initGPIO_CAN(void);
+static void initGPIO_PWM(void);
 static void initGPIO_USB(void);
 
 void HAL_MspInit(void) {
@@ -36,6 +37,14 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef *hcan) {
 		__HAL_RCC_GPIOA_CLK_ENABLE();
 		__HAL_RCC_CAN1_CLK_ENABLE();
 		initGPIO_CAN();
+	}
+}
+
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim) {
+	if (htim->Instance == TIM1) {
+		__HAL_RCC_GPIOA_CLK_ENABLE();
+		__HAL_RCC_TIM1_CLK_ENABLE();
+		initGPIO_PWM();
 	}
 }
 
@@ -85,6 +94,7 @@ static void initGPIO_CAN() {
 	};
 	HAL_GPIO_Init(GPIOA, &iface);
 }
+
 static void initGPIO_USB(void) {
 //	PB12 - USB_OTG_ID
 //	PB13 - USB_OTG_VBUS
@@ -118,3 +128,15 @@ static void initGPIO_USB(void) {
 	HAL_GPIO_Init(GPIOC, &ifacePSO);
 	HAL_GPIO_Init(GPIOC, &ifaceOC);
 }
+
+static void initGPIO_PWM(void) {
+	GPIO_InitTypeDef iface = {
+			GPIO_PIN_8,
+			GPIO_MODE_AF_PP,
+			GPIO_NOPULL,
+			GPIO_SPEED_FREQ_LOW,
+			GPIO_AF1_TIM1
+	};
+	HAL_GPIO_Init(GPIOA, &iface);
+}
+
