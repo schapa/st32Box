@@ -10,6 +10,7 @@
 #include "stm32f4xx_hal.h"
 #include "diag/Trace.h"
 #include "trigger.h"
+#include "usbd_core.h"
 
 static CAN_HandleTypeDef *s_canHandle = NULL;
 
@@ -30,14 +31,19 @@ void InitTrigger(CAN_HandleTypeDef *can) {
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == GPIO_PIN_0) {
-		s_canHandle->pTxMsg = malloc(sizeof(*s_canHandle->pTxMsg));
-		memcpy(s_canHandle->pTxMsg->Data, "HELLO HJ", 8);
-		s_canHandle->pTxMsg->DLC = 8;
-		s_canHandle->pTxMsg->RTR = 0;
-		s_canHandle->pTxMsg->IDE = 0;
-		s_canHandle->pTxMsg->StdId = 0x22;
-		HAL_StatusTypeDef stat = HAL_CAN_Transmit_IT(s_canHandle);
-		trace_printf("Send [%d]\n\r", stat);
+//		s_canHandle->pTxMsg = malloc(sizeof(*s_canHandle->pTxMsg));
+//		memcpy(s_canHandle->pTxMsg->Data, "HELLO HJ", 8);
+//		s_canHandle->pTxMsg->DLC = 8;
+//		s_canHandle->pTxMsg->RTR = 0;
+//		s_canHandle->pTxMsg->IDE = 0;
+//		s_canHandle->pTxMsg->StdId = 0x22;
+//		HAL_StatusTypeDef stat = HAL_CAN_Transmit_IT(s_canHandle);
+//		trace_printf("Send [%d]\n\r", stat);
+
+		extern USBD_HandleTypeDef USBD_Device;
+		const char *str ="Hello!\r\n";
+		    USBD_CDC_SetTxBuffer(&USBD_Device, str, strlen(str));
+		    USBD_CDC_TransmitPacket(&USBD_Device);
 	}
 }
 

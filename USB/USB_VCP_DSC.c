@@ -72,7 +72,7 @@ static uint8_t s_strDesc[USBD_MAX_STR_DESC_SIZ];
 
 static uint8_t* deviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
 	(void)speed;
-	*length = sizeof(USBD_VCP_DeviceDesc);
+	*length = USBD_VCP_DeviceDesc[0];
 	return USBD_VCP_DeviceDesc;
 }
 

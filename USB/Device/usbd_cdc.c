@@ -666,7 +666,7 @@ static uint8_t  USBD_CDC_DataIn (USBD_HandleTypeDef *pdev, uint8_t epnum)
   
   if(pdev->pClassData != NULL)
   {
-    
+trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
     hcdc->TxState = 0;
 
     return USBD_OK;
@@ -695,6 +695,7 @@ static uint8_t  USBD_CDC_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum)
   NAKed till the end of the application Xfer */
   if(pdev->pClassData != NULL)
   {
+trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
     ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Receive(hcdc->RxBuffer, &hcdc->RxLength);
 
     return USBD_OK;

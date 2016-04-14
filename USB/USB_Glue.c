@@ -21,7 +21,7 @@ USBD_StatusTypeDef USBD_LL_Init (USBD_HandleTypeDef *pDev) {
 	PCD_HandleTypeDef *handle = pDev ? pDev->pData : NULL;
 	_Bool isHighSpeed = true; //pDev->id == DEVICE_HS
 	PCD_InitTypeDef iface = {
-			7, // Device Endpoints number.
+			15, // Device Endpoints number.
 			1, // Host Channels number.
 			isHighSpeed ? USB_OTG_SPEED_HIGH : USB_OTG_SPEED_FULL,
 			DISABLE, // USB embedded DMA.
@@ -133,30 +133,30 @@ void  USBD_LL_Delay (uint32_t Delay) {
 /* wrappers */
 void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) {
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 	USBD_LL_DataOutStage(pDev, epnum, hpcd->OUT_ep[epnum].xfer_buff);
 }
 
 void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) {
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 	USBD_LL_DataInStage(pDev, epnum, hpcd->IN_ep[epnum].xfer_buff);
 }
 
 void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd) {
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 	USBD_LL_SetupStage(pDev, (uint8_t *)hpcd->Setup);
 }
 
 void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd) {
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 	USBD_LL_SOF(pDev);
 }
 
 void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd) {
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
 	USBD_SpeedTypeDef speed = USBD_SPEED_FULL;
@@ -178,37 +178,37 @@ trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 
 void HAL_PCD_SuspendCallback(PCD_HandleTypeDef *hpcd) {
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 	USBD_LL_Suspend(pDev);
 }
 
 void HAL_PCD_ResumeCallback(PCD_HandleTypeDef *hpcd) {
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 	USBD_LL_Resume(pDev);
 }
 
 void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) {
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 	USBD_LL_IsoOUTIncomplete(pDev, epnum);
 }
 
 void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) {
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 	USBD_LL_IsoINIncomplete(pDev, epnum);
 }
 
 void HAL_PCD_ConnectCallback(PCD_HandleTypeDef *hpcd) {
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 	USBD_LL_DevConnected(pDev);
 }
 
 void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd) {
 	USBD_HandleTypeDef *pDev = (USBD_HandleTypeDef*)hpcd->pData;
-trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
+//trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
 	USBD_LL_DevDisconnected(pDev);
 }
 
