@@ -524,7 +524,7 @@ static uint8_t  USBD_CDC_Init (USBD_HandleTypeDef *pdev,
     hcdc = (USBD_CDC_HandleTypeDef*) pdev->pClassData;
     
     /* Init  physical Interface components */
-    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Init();
+    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Init(pdev);
     
     /* Init Xfer states */
     hcdc->TxState =0;
@@ -580,7 +580,7 @@ static uint8_t  USBD_CDC_DeInit (USBD_HandleTypeDef *pdev,
   /* DeInit  physical Interface components */
   if(pdev->pClassData != NULL)
   {
-    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->DeInit();
+    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->DeInit(pdev);
     USBD_free(pdev->pClassData);
     pdev->pClassData = NULL;
   }
@@ -608,7 +608,7 @@ static uint8_t  USBD_CDC_Setup (USBD_HandleTypeDef *pdev,
     {
       if (req->bmRequest & 0x80)
       {
-        ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Control(req->bRequest,
+        ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Control(pdev, req->bRequest,
                                                           (uint8_t *)hcdc->data,
                                                           req->wLength);
           USBD_CtlSendData (pdev, 
@@ -628,7 +628,7 @@ static uint8_t  USBD_CDC_Setup (USBD_HandleTypeDef *pdev,
     }
     else
     {
-      ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Control(req->bRequest,
+      ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Control(pdev, req->bRequest,
                                                         (uint8_t*)req,
                                                         0);
     }
@@ -696,7 +696,7 @@ static uint8_t  USBD_CDC_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum)
   if(pdev->pClassData != NULL)
   {
 trace_printf("USB [Callback] %s \n\r", __FUNCTION__);
-    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Receive(hcdc->RxBuffer, &hcdc->RxLength);
+    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Receive(pdev, hcdc->RxBuffer, &hcdc->RxLength);
 
     return USBD_OK;
   }
@@ -721,7 +721,7 @@ static uint8_t  USBD_CDC_EP0_RxReady (USBD_HandleTypeDef *pdev)
   
   if((pdev->pUserData != NULL) && (hcdc->CmdOpCode != 0xFF))
   {
-    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Control(hcdc->CmdOpCode,
+    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Control(pdev, hcdc->CmdOpCode,
                                                       (uint8_t *)hcdc->data,
                                                       hcdc->CmdLength);
       hcdc->CmdOpCode = 0xFF; 

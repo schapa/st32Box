@@ -18,21 +18,13 @@
 
 USBD_HandleTypeDef USBD_Device;
 
-#define RX_DATA_SIZE  2048
-#define TX_DATA_SIZE  2048
-
-static uint8_t s_rxBuffer[RX_DATA_SIZE];
-static uint8_t s_txBuffer[TX_DATA_SIZE];
-
 void USB_GenericInit(void) {
 	extern USBD_DescriptorsTypeDef VCP_Desc;
 	extern USBD_ClassTypeDef USBD_CDC;
 	extern USBD_CDC_ItfTypeDef SHPA_CDC_FOPS;
 	USBD_Init(&USBD_Device, &VCP_Desc, 0x32);
-	USBD_CDC_RegisterInterface(&USBD_Device, &SHPA_CDC_FOPS);
-	USBD_CDC_SetTxBuffer(&USBD_Device, s_txBuffer, 0);
-	USBD_CDC_SetRxBuffer(&USBD_Device, s_rxBuffer);
 	USBD_RegisterClass(&USBD_Device, &USBD_CDC);
+	USBD_CDC_RegisterInterface(&USBD_Device, &SHPA_CDC_FOPS);
 	USBD_Start(&USBD_Device);
 }
 
