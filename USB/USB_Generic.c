@@ -22,9 +22,11 @@ void USB_GenericInit(void) {
 	extern USBD_DescriptorsTypeDef VCP_Desc;
 	extern USBD_ClassTypeDef USBD_CDC;
 	extern USBD_CDC_ItfTypeDef SHPA_CDC_FOPS;
+
 	USBD_Init(&USBD_Device, &VCP_Desc, 0x32);
 	USBD_RegisterClass(&USBD_Device, &USBD_CDC);
 	USBD_CDC_RegisterInterface(&USBD_Device, &SHPA_CDC_FOPS);
+
 	USBD_Start(&USBD_Device);
 }
 

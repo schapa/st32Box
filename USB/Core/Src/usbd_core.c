@@ -131,11 +131,18 @@ USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef *pdev, USBD_DescriptorsTypeDef *
 */
 USBD_StatusTypeDef USBD_DeInit(USBD_HandleTypeDef *pdev)
 {
+  if(pdev == NULL)
+  {
+	USBD_ErrLog("Invalid Device handle");
+	return USBD_FAIL;
+  }
   /* Set Default State */
-  pdev->dev_state  = USBD_STATE_DEFAULT;
+  pdev->dev_state = USBD_STATE_DEFAULT;
   
   /* Free Class Resources */
-  pdev->pClass->DeInit(pdev, pdev->dev_config);  
+  if (pdev->pClass && pdev->pClass->DeInit) {
+	  pdev->pClass->DeInit(pdev, pdev->dev_config);
+  }
   
     /* Stop the low level driver  */
   USBD_LL_Stop(pdev); 

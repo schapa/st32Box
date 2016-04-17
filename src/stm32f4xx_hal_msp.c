@@ -59,6 +59,18 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd) {
 	initGPIO_USB();
 }
 
+void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd) {
+	if (hpcd->Instance == USB_OTG_FS) {
+		__HAL_RCC_USB_OTG_FS_CLK_DISABLE();
+	} else if (hpcd->Instance == USB_OTG_HS) {
+		__HAL_RCC_USB_OTG_HS_CLK_DISABLE();
+	} else {
+		__HAL_RCC_USB_OTG_FS_CLK_DISABLE();
+		__HAL_RCC_USB_OTG_HS_CLK_DISABLE();
+	}
+}
+
+
 static void initGPIO_UARTtrace(void) {
 
 	GPIO_InitTypeDef iface = {
