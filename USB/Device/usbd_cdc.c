@@ -129,6 +129,11 @@ static uint8_t  *USBD_CDC_GetOtherSpeedCfgDesc (uint16_t *length);
 
 static uint8_t  *USBD_CDC_GetOtherSpeedCfgDesc (uint16_t *length);
 
+#if (USBD_SUPPORT_USER_STRING == 1)
+static uint8_t* USBD_CDC_GetUsrStringDesc (USBD_HandleTypeDef *pdev, uint8_t index , uint16_t *length);
+#endif
+
+
 uint8_t  *USBD_CDC_GetDeviceQualifierDescriptor (uint16_t *length);
 
 /* USB Standard Device Descriptor */
@@ -171,6 +176,9 @@ USBD_ClassTypeDef USBD_CDC = {
   USBD_CDC_GetFSCfgDesc,    
   USBD_CDC_GetOtherSpeedCfgDesc, 
   USBD_CDC_GetDeviceQualifierDescriptor,
+#if (USBD_SUPPORT_USER_STRING == 1)
+  USBD_CDC_GetUsrStringDesc
+#endif
 };
 
 /* USB CDC device Configuration Descriptor */
@@ -766,6 +774,31 @@ static uint8_t  *USBD_CDC_GetOtherSpeedCfgDesc (uint16_t *length)
   *length = sizeof (USBD_CDC_OtherSpeedCfgDesc);
   return USBD_CDC_OtherSpeedCfgDesc;
 }
+
+/**
+  * @brief  USBD_DFU_GetUsrStringDesc
+  *         Manages the transfer of memory interfaces string descriptors.
+  * @param  speed : current device speed
+  * @param  index: desciptor index
+  * @param  length : pointer data length
+  * @retval pointer to the descriptor table or NULL if the descriptor is not supported.
+  */
+#if (USBD_SUPPORT_USER_STRING == 1)
+static uint8_t* USBD_CDC_GetUsrStringDesc(USBD_HandleTypeDef *pdev, uint8_t index , uint16_t *length) {
+	static uint8_t USBD_StrDesc[255];
+	/* Check if the requested string interface is supported */
+	if (index <= (USBD_IDX_INTERFACE_STR + USBD_DFU_MAX_ITF_NUM))
+	{
+		USBD_GetString ((uint8_t *)((USBD_CDC_ItfTypeDef*)pdev->pUserData)->pStrDesc, USBD_StrDesc, length);
+		return USBD_StrDesc;
+	}
+	/* Not supported Interface Descriptor index */
+	else
+	{
+		return NULL;
+	}
+}
+#endif
 
 /**
 * @brief  DeviceQualifierDescriptor 

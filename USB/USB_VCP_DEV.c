@@ -39,7 +39,8 @@ USBD_CDC_ItfTypeDef SHPA_CDC_FOPS = {
 		DeInit,
 		Control,
 		Receive,
-		{ 0 }
+		{ 0 },
+		"Hello My little master"
 };
 
 
@@ -52,8 +53,6 @@ trace_printf("USB [VCP] %s \n\r", __FUNCTION__);
 
 	USBD_CDC_SetTxBuffer(pDevice, s_txBuffer, 0);
 	USBD_CDC_SetRxBuffer(pDevice, s_rxBuffer);
-//	TODO: call it here ?
-	USBD_CDC_ReceivePacket(pDevice);
 
 	return USBD_OK;
 }

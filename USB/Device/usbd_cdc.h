@@ -103,6 +103,7 @@ typedef struct {
 	int8_t (* Control)       (USBD_HandleTypeDef *pDevice, uint8_t, uint8_t * , uint16_t);
 	int8_t (* Receive)       (USBD_HandleTypeDef *pDevice, uint8_t *, uint32_t *);
 	USBD_CDC_LineCodingTypeDef property;
+	uint8_t *pStrDesc;
 } USBD_CDC_ItfTypeDef;
 
 
