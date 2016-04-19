@@ -9,7 +9,7 @@
 #include "string.h"
 
 static USART_HandleTypeDef *s_tracerHandle = NULL;
-static USART_HandleTypeDef *s_subiClockHandle = NULL;
+static USART_HandleTypeDef *s_deviceHandle = NULL;
 
 HAL_StatusTypeDef USART_tracerInit(USART_HandleTypeDef *handle) {
 
@@ -33,7 +33,7 @@ HAL_StatusTypeDef USART_tracerInit(USART_HandleTypeDef *handle) {
 	return result;
 }
 
-HAL_StatusTypeDef USART_subiClockInit(USART_HandleTypeDef *handle, uint32_t baudRate) {
+HAL_StatusTypeDef USART_deviceInit(USART_HandleTypeDef *handle, uint32_t baudRate) {
 
 	HAL_StatusTypeDef result = HAL_ERROR;
 	USART_InitTypeDef ifaceParams = {
@@ -46,7 +46,7 @@ HAL_StatusTypeDef USART_subiClockInit(USART_HandleTypeDef *handle, uint32_t baud
 			0,0
 	};
 	if (handle) {
-		s_subiClockHandle = s_subiClockHandle;
+		s_deviceHandle = s_deviceHandle;
 		memset(handle, 0, sizeof(*handle));
 		handle->Instance = USART2;
 		handle->Init = ifaceParams;
@@ -61,4 +61,8 @@ int trace_write_usart(const char *buf, size_t nbyte) {
 		HAL_USART_Transmit(s_tracerHandle, (uint8_t*)buf, nbyte, 0xFF);
 	}
 	return nbyte;
+}
+
+void USART2_IRQHandler(void) {
+	HAL_USART_IRQHandler(s_deviceHandle);
 }

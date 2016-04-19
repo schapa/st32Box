@@ -76,7 +76,7 @@ void simpleTest(void) {
 	trace_printf("summ [%x]\n\r", summ);
 
 	USART_HandleTypeDef usart;
-	USART_subiClockInit(&usart, 9600);
+	USART_deviceInit(&usart, 9600);
 	dumpUsartTraceProps(&usart);
 	while (1) {
 		HAL_StatusTypeDef status = HAL_USART_Transmit(&usart, s_testingSequence, 15, 0xFF);

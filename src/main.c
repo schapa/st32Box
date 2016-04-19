@@ -44,6 +44,8 @@ int main(int argc, char* argv[]) {
 
 	PWM_Init();
 extern void USB_GenericInit(void);
+extern void QueryTest(void);
+QueryTest();
 USB_GenericInit();
 //simpleTest();
 
