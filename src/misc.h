@@ -10,8 +10,10 @@
 
 #include "stm32f4xx_hal.h"
 
-void printHelpMessage(void);
-void dumpUsartTraceProps(USART_HandleTypeDef *traceUsart);
-void dumpCANProps(CAN_HandleTypeDef *canBus);
+void HELP_printMessage(void);
+void HELP_dumpUsartProps(USART_HandleTypeDef *traceUsart);
+void HELP_dumpCANProps(CAN_HandleTypeDef *canBus);
+
+uint32_t HELP_getUsartIdByHandle(USART_HandleTypeDef *traceUsart);
 
 #endif /* MISC_H_ */

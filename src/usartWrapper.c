@@ -7,6 +7,7 @@
 
 #include "usartWrapper.h"
 #include "string.h"
+#include "bsp.h"
 
 static USART_HandleTypeDef *s_tracerHandle = NULL;
 static USART_HandleTypeDef *s_deviceHandle = NULL;
@@ -40,18 +41,19 @@ HAL_StatusTypeDef USART_deviceInit(USART_HandleTypeDef *handle, uint32_t baudRat
 			baudRate,
 			USART_WORDLENGTH_8B,
 			USART_STOPBITS_1,
-			USART_PARITY_EVEN,
+			USART_PARITY_NONE,
 			USART_MODE_TX_RX,
 			USART_POLARITY_LOW,
 			0,0
 	};
 	if (handle) {
-		s_deviceHandle = s_deviceHandle;
+		s_deviceHandle = handle;
 		memset(handle, 0, sizeof(*handle));
 		handle->Instance = USART2;
 		handle->Init = ifaceParams;
 
 		result = HAL_USART_Init(handle);
+		HAL_NVIC_EnableIRQ(USART2_IRQn);
 	}
 	return result;
 }
@@ -63,6 +65,25 @@ int trace_write_usart(const char *buf, size_t nbyte) {
 	return nbyte;
 }
 
+
 void USART2_IRQHandler(void) {
 	HAL_USART_IRQHandler(s_deviceHandle);
+}
+
+
+void HAL_USART_RxCpltCallback(USART_HandleTypeDef *husart) {
+	Event_t test = { EVENT_USART, ES_UsART_RX, (intptr_t)husart };
+	BSP_queuePush(&test);
+}
+void HAL_USART_TxCpltCallback(USART_HandleTypeDef *husart) {
+	Event_t test = { EVENT_USART, ES_UsART_TX, (intptr_t)husart };
+	BSP_queuePush(&test);
+}
+void HAL_USART_TxRxCpltCallback(USART_HandleTypeDef *husart) {
+	Event_t test = { EVENT_USART, ES_UsART_RXTX, (intptr_t)husart };
+	BSP_queuePush(&test);
+}
+void HAL_USART_ErrorCallback(USART_HandleTypeDef *husart) {
+	Event_t test = { EVENT_USART, ES_UsART_ERROR, (intptr_t)husart };
+	BSP_queuePush(&test);
 }

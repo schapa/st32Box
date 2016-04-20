@@ -77,7 +77,7 @@ void simpleTest(void) {
 
 	USART_HandleTypeDef usart;
 	USART_deviceInit(&usart, 9600);
-	dumpUsartTraceProps(&usart);
+	HELP_dumpUsartProps(&usart);
 	while (1) {
 		HAL_StatusTypeDef status = HAL_USART_Transmit(&usart, s_testingSequence, 15, 0xFF);
 		trace_printf("tr [%d]\n\r", status);

@@ -23,14 +23,14 @@ static const char *canStrGPIO(CAN_TypeDef *handle);
 static const char *const delim = "----------------------------------------------------";
 
 
-void printHelpMessage(void) {
+void HELP_printMessage(void) {
 	trace_printf("\n\r%s\n\r", delim);
 	dumpTargetProps();
 	trace_printf("%s\n\r", delim);
 }
 
 
-void dumpUsartTraceProps(USART_HandleTypeDef *traceUsart) {
+void HELP_dumpUsartProps(USART_HandleTypeDef *traceUsart) {
 	if (traceUsart) {
 		trace_printf("USART_%d\n\r", usartIdByHandle(traceUsart->Instance));
 		trace_printf("\t        Pins: %s\n\r", usartStrGPIO(traceUsart->Instance));
@@ -42,11 +42,15 @@ void dumpUsartTraceProps(USART_HandleTypeDef *traceUsart) {
 	}
 }
 
-void dumpCANProps(CAN_HandleTypeDef *canBus) {
+void HELP_dumpCANProps(CAN_HandleTypeDef *canBus) {
 	if (canBus) {
 		trace_printf("CAN_%d\n\r", canBus->Instance == CAN1 ? 1 : 2);
 		trace_printf("\t        Pins: %s\n\r", canStrGPIO(canBus->Instance));
 	}
+}
+
+uint32_t HELP_getUsartIdByHandle(USART_HandleTypeDef *traceUsart) {
+	return traceUsart ? usartIdByHandle(traceUsart->Instance) : -1;
 }
 
 
@@ -89,7 +93,7 @@ static const char *usartStrGPIO(USART_TypeDef *usart) {
 		const char *str;
 	} elements[] = {
 			{ USART1, "TX:PA9 RX:PA10" },
-			{ USART2, "(Unknown)" },
+			{ USART2, "TX:PD5 RX:PD6" },
 			{ USART3, "(Unknown)" },
 			{ USART6, "(Unknown)" },
 	};

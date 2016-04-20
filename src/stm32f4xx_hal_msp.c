@@ -15,7 +15,7 @@ static void initGPIO_PWM(void);
 static void initGPIO_USB(void);
 
 void HAL_MspInit(void) {
-	LED_init();
+	BSP_init();
 }
 
 void HAL_USART_MspInit(USART_HandleTypeDef *husart) {
@@ -86,7 +86,7 @@ static void initGPIO_UARTtrace(void) {
 static void initGPIO_UARTclock(void) {
 
 	GPIO_InitTypeDef iface = {
-			GPIO_PIN_5,
+			GPIO_PIN_5 | GPIO_PIN_6,
 			GPIO_MODE_AF_PP,
 			GPIO_NOPULL,
 			GPIO_SPEED_FREQ_LOW,

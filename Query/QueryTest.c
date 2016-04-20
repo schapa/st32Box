@@ -9,6 +9,7 @@
 #include "diag/Trace.h"
 #include "stm32f4xx_hal.h"
 #include "usartWrapper.h"
+#include "bsp.h"
 
 #define CRLF "\r\n"
 
@@ -52,6 +53,8 @@ static Step_t steps[] = {
 };
 
 static char queryBuffer[1024];
+static char answerBuffer[1024];
+static USART_HandleTypeDef s_usart;
 
 static Request_t testReq = {
 		0, QUERY_INIT,
@@ -59,19 +62,16 @@ static Request_t testReq = {
 		queryBuffer, sizeof(queryBuffer)
 };
 
-static USART_HandleTypeDef s_usart;
 
 void QueryTest(void) {
-
-	USART_deviceInit(&s_usart, 115200);
-	do {
+	static _Bool init;
+	if (!init) {
+		USART_deviceInit(&s_usart, 115200);
+		HELP_dumpUsartProps(&s_usart);
+		init = true;
+	}
+	if ((testReq.state != QUERY_FAILED) && (testReq.state != QUERY_DONE)) {
 		QueryProcess(&testReq);
-		HAL_USART_Transmit(&s_usart, testReq.buffer, testReq.bufferOccupied, 0xFF);
-	} while ((testReq.state != QUERY_FAILED) && (testReq.state != QUERY_DONE));
-}
-
-void HAL_USART_RxCpltCallback(USART_HandleTypeDef *husart) {
-	if (husart == &s_usart) {
-
+		HAL_USART_Transmit_IT(&s_usart, (uint8_t*)testReq.buffer, testReq.bufferOccupied);
 	}
 }

@@ -77,6 +77,7 @@ static _Bool makeStep(Request_p req) {
 				break;
 		}
 		if (continueStepping && ++step->state == STEP_ENDED) {
+			req->bufferOccupied = 0;
 			req->stepCurrent++;
 		}
 	} while (0);
