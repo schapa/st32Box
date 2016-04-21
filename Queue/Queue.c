@@ -11,7 +11,7 @@
 #include "stm32f4xx_hal.h"
 #include "diag/Trace.h"
 
-static Event_t s_dummyEvent = { EVENT_DUMMY, 0, 0 };
+static Event_t s_dummyEvent;
 
 static _Bool isSameEvent(Event_p pEventOne, Event_p pEventTwo);
 static EventQueue_p newNodeLocked(Event_p pEvent);

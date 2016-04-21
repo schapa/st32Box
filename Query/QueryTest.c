@@ -10,6 +10,7 @@
 #include "stm32f4xx_hal.h"
 
 #include "bsp.h"
+#include "misc.h"
 #include "usartWrapper.h"
 
 #define CRLF "\r\n"
@@ -54,7 +55,6 @@ static Step_t steps[] = {
 };
 
 static char queryBuffer[1024];
-static char answerBuffer[1024];
 static USART_HandleTypeDef s_usart;
 
 static Request_t testReq = {

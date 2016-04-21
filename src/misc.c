@@ -63,11 +63,11 @@ void HELP_dumpCANRxMsg(CanRxMsgTypeDef *msg) {
 }
 
 uint32_t HELP_getUsartIdByHandle(USART_HandleTypeDef *traceUsart) {
-	return traceUsart ? usartIdByHandle(traceUsart->Instance) : -1;
+	return traceUsart ? usartIdByHandle(traceUsart->Instance) : 0;
 }
 
 uint32_t HELP_getCanIdByHandle(CAN_HandleTypeDef *canBus) {
-	return canBus ? canIdByHandle(canBus->Instance) : -1;
+	return canBus ? canIdByHandle(canBus->Instance) : 0;
 }
 
 

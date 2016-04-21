@@ -80,7 +80,7 @@ static uint8_t* deviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
 static uint8_t* langIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
 	(void)speed;
 	*length = USB_LEN_LANGID_STR_DESC;
-	return s_langIDDesc;
+	return (uint8_t*)s_langIDDesc;
 }
 
 static uint8_t* productStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {

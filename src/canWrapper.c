@@ -93,7 +93,10 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
 	if (hcan) {
 		Event_t event = { EVENT_CAN, { ES_CAN_ERROR },
-				.data.can = { hcan }
+				.data.can = {
+						hcan,
+						.txMsg = *hcan->pTxMsg
+				}
 		};
 		BSP_queuePush(&event);
 	}
