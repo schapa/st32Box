@@ -5,9 +5,10 @@
  *      Author: pavelgamov
  */
 
-#include "systemStatus.h"
 #include <stddef.h>
+
 #include "bsp.h"
+#include "systemStatus.h"
 
 #define TICKS_PER_SECOND 1000
 
@@ -42,7 +43,7 @@ void SystemStatus_set(systemStatus_t status) {
 
 void SysTick_Handler(void) {
 	uint32_t period = s_timing[s_systemStatus].activeTime + s_timing[s_systemStatus].passiveTime;
-//	Event_t tick = { EVENT_SYSTICK, ES_SYSTICK_TICK, s_uptimeTicks };
+//	Event_t tick = { EVENT_SYSTICK, { ES_SYSTICK_TICK }, s_uptimeTicks };
 //	BSP_queuePush(&tick);
 	if (s_systemLed)
 		s_systemLed(s_systemStatusTimer <= s_timing[s_systemStatus].activeTime);
@@ -54,7 +55,7 @@ void SysTick_Handler(void) {
 
 	if (!(s_uptimeTicks++ % TICKS_PER_SECOND)) {
 		s_uptimeSeconds++;
-		Event_t seconds = { EVENT_SYSTICK, ES_SYSTICK_SECOND_ELAPSED, s_uptimeSeconds };
+		Event_t seconds = { EVENT_SYSTICK, { ES_SYSTICK_SECOND_ELAPSED }, s_uptimeSeconds };
 		BSP_queuePush(&seconds);
 	}
 #if defined(USE_HAL_DRIVER)

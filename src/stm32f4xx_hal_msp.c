@@ -6,6 +6,7 @@
  */
 
 #include "stm32f4xx_hal.h"
+
 #include "bsp.h"
 
 static void initGPIO_UARTtrace(void);

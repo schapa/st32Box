@@ -18,6 +18,11 @@ typedef enum {
 } EventTypes_t;
 
 typedef enum {
+	ES_SYSTICK_TICK,
+	ES_SYSTICK_SECOND_ELAPSED
+} SystickSubTypes_t;
+
+typedef enum {
 	ES_EXTI_DOWN,
 	ES_EXTI_UP,
 } ExtiSubTypes_t;
@@ -29,15 +34,10 @@ typedef enum {
 	ES_UsART_ERROR
 } UsartSubTypes_t;
 
-typedef enum {
-	ES_SYSTICK_TICK,
-	ES_SYSTICK_SECOND_ELAPSED
-} SystickSubTypes_t;
-
 typedef union {
-	ExtiSubTypes_t exti;
-	UsartSubTypes_t usart;
 	SystickSubTypes_t systick;
+	ExtiSubTypes_t exti;
+	UsartSubTypes_t uxart;
 } EventSubTypes_t;
 
 

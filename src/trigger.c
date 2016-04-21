@@ -5,12 +5,14 @@
  *      Author: shapa
  */
 
+#include "trigger.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include "stm32f4xx_hal.h"
 #include "diag/Trace.h"
-#include "trigger.h"
 #include "usbd_core.h"
+
 #include "bsp.h"
 
 static CAN_HandleTypeDef *s_canHandle = NULL;
@@ -31,8 +33,8 @@ void InitTrigger(CAN_HandleTypeDef *can) {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	Event_t pin = { EVENT_EXTI, ES_EXTI_DOWN, GPIO_Pin };
-	BSP_queuePush(&pin);
+	Event_t event = { EVENT_EXTI, { ES_EXTI_DOWN }, GPIO_Pin };
+	BSP_queuePush(&event);
 	if (GPIO_Pin == GPIO_PIN_0) {
 //		s_canHandle->pTxMsg = malloc(sizeof(*s_canHandle->pTxMsg));
 //		memcpy(s_canHandle->pTxMsg->Data, "HELLO HJ", 8);

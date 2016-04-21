@@ -8,9 +8,10 @@
 #include <stdint.h>
 #include "diag/Trace.h"
 #include "stm32f4xx_hal.h"
+
+#include "systemStatus.h"
 #include "usartWrapper.h"
 #include "misc.h"
-#include "systemStatus.h"
 
 typedef struct {
 	uint8_t temperature; 		// 0 (temperature/2) - 40 °C or (0.9*temperature - 40) °F

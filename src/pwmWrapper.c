@@ -5,9 +5,10 @@
  *      Author: pavelgamov
  */
 
+#include "pwmWrapper.h"
+
 #include "diag/Trace.h"
 #include "stm32f4xx_hal.h"
-#include "pwmWrapper.h"
 
 static void timerBaseInit(TIM_HandleTypeDef *htim);
 static void timerOscInit(TIM_HandleTypeDef *htim, uint32_t channel, uint8_t dutPercent);

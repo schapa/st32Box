@@ -6,7 +6,9 @@
  */
 
 #include "usartWrapper.h"
+
 #include "string.h"
+
 #include "bsp.h"
 
 static USART_HandleTypeDef *s_tracerHandle = NULL;
@@ -72,18 +74,18 @@ void USART2_IRQHandler(void) {
 
 
 void HAL_USART_RxCpltCallback(USART_HandleTypeDef *husart) {
-	Event_t test = { EVENT_USART, ES_UsART_RX, (intptr_t)husart };
-	BSP_queuePush(&test);
+	Event_t event = { EVENT_USART, { ES_UsART_RX }, (intptr_t)husart };
+	BSP_queuePush(&event);
 }
 void HAL_USART_TxCpltCallback(USART_HandleTypeDef *husart) {
-	Event_t test = { EVENT_USART, ES_UsART_TX, (intptr_t)husart };
-	BSP_queuePush(&test);
+	Event_t event = { EVENT_USART, { ES_UsART_TX }, (intptr_t)husart };
+	BSP_queuePush(&event);
 }
 void HAL_USART_TxRxCpltCallback(USART_HandleTypeDef *husart) {
-	Event_t test = { EVENT_USART, ES_UsART_RXTX, (intptr_t)husart };
-	BSP_queuePush(&test);
+	Event_t event = { EVENT_USART, { ES_UsART_RXTX }, (intptr_t)husart };
+	BSP_queuePush(&event);
 }
 void HAL_USART_ErrorCallback(USART_HandleTypeDef *husart) {
-	Event_t test = { EVENT_USART, ES_UsART_ERROR, (intptr_t)husart };
-	BSP_queuePush(&test);
+	Event_t event = { EVENT_USART, { ES_UsART_ERROR }, (intptr_t)husart };
+	BSP_queuePush(&event);
 }

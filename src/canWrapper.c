@@ -5,8 +5,9 @@
  *      Author: shapa
  */
 
-#include "diag/Trace.h"
 #include "canWrapper.h"
+
+#include "diag/Trace.h"
 #include <string.h>
 #include <stdlib.h>
 

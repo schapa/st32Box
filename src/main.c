@@ -11,13 +11,14 @@
 #include <string.h>
 #include "diag/Trace.h"
 #include "stm32f4xx_hal.h"
-#include "usartWrapper.h"
+
+#include "bsp.h"
 #include "canWrapper.h"
 #include "pwmWrapper.h"
+#include "systemStatus.h"
 #include "trigger.h"
+#include "usartWrapper.h"
 #include "misc.h"
-#include "bsp.h"
-
 #include "systemStatus.h"
 
 int main(int argc, char* argv[]) {
@@ -69,25 +70,29 @@ char buffer[50];
 				break;
 			case EVENT_USART: {
 				USART_HandleTypeDef *husart = (USART_HandleTypeDef*)event.data;
-				switch (event.subType.usart) {
+				switch (event.subType.uxart) {
 					case ES_UsART_RX:
-						trace_printf("[UART_RX] %p state %d\n\r", husart, husart->State);
+						trace_printf("[USART_RX] id [%d] state %d\n\r",
+								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart));
 						trace_printf("\t rx %d from %d\n\r", husart->RxXferCount, husart->RxXferSize);
 						break;
 					case ES_UsART_TX:
-						trace_printf("[UART_TX] %p state %d\n\r", husart, husart->State);
+						trace_printf("[USART_TX] id [%d] state %d\n\r",
+								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart));
 						trace_printf("\t tx %d from %d\n\r", husart->TxXferCount, husart->TxXferSize);
 						break;
 					case ES_UsART_RXTX:
-						trace_printf("[UART_RXTX] %p state %d\n\r", husart, husart->State);
+						trace_printf("[USART_RXTX] id [%d] state %d\n\r",
+								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart));
 						trace_printf("\t tx %d from %d\n\r", husart->TxXferCount, husart->TxXferSize);
 						trace_printf("\t rx %d from %d\n\r", husart->RxXferCount, husart->RxXferSize);
 						break;
 					case ES_UsART_ERROR:
-						trace_printf("[UART_ERROR] %p errno %d\n\r", husart, husart->ErrorCode);
+						trace_printf("[USART_ERROR] id [%d] state %d errno %d\n\r",
+								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart), HAL_USART_GetError(husart));
 						break;
 				}
-			}
+			} break;
 			default:
 				trace_printf("Unhandled Event type %p data %p!\n\r", event.type, event.data);
 				break;
