@@ -45,6 +45,7 @@ HAL_StatusTypeDef CAN_init(CAN_HandleTypeDef *handle) {
 
 	if (handle) {
 		free(handle->pRxMsg);
+		free(handle->pTxMsg);
 		memset(handle, 0, sizeof(*handle));
 		handle->Instance = CAN1;
 		handle->Init = ifaceParams;
@@ -57,11 +58,27 @@ HAL_StatusTypeDef CAN_init(CAN_HandleTypeDef *handle) {
 			HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);
 //			HAL_NVIC_EnableIRQ(CAN1_SCE_IRQn);
 			handle->pRxMsg = malloc(sizeof(*handle->pRxMsg));
-			HAL_CAN_Receive_IT(handle, CAN_FIFO0);
+			result &= HAL_CAN_Receive_IT(handle, CAN_FIFO0);
 		}
 		s_can1Handle = handle;
 	}
 	return result;
+}
+
+HAL_StatusTypeDef CAN_write(CanTxMsgTypeDef *txMsg) {
+	HAL_StatusTypeDef status = HAL_ERROR;
+	size_t msgSize = sizeof(CanTxMsgTypeDef);
+	do {
+		if (!s_can1Handle || !txMsg)
+			break;
+		free(s_can1Handle->pTxMsg);
+		s_can1Handle->pTxMsg = malloc(msgSize);
+		if (!s_can1Handle->pTxMsg)
+			break;
+		memcpy(s_can1Handle->pTxMsg, txMsg, msgSize);
+		status = HAL_CAN_Transmit_IT(s_can1Handle);
+	} while (0);
+	return status;
 }
 
 void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {

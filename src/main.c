@@ -14,6 +14,7 @@
 
 #include "bsp.h"
 #include "USB_Generic.h"
+#include "canWrapper.h"
 #include "misc.h"
 
 int main(int argc, char* argv[]) {
@@ -29,11 +30,19 @@ QueryTest();
 		Event_t event;
 		BSP_queuePendEvent(&event);
 		switch (event.type) {
-			case EVENT_EXTI:
+			case EVENT_EXTI: {
+				char *text = "hello !";
+				CanTxMsgTypeDef txMsg = {
+						0x22, 0,
+						CAN_ID_STD,
+						CAN_RTR_DATA,
+						8,
+						{ text[0], text[1], text[2], text[3], text[4], text[5], text[6], text[7] }
+				};
 				trace_printf("[Exti] pin %d act %d\n\r", event.data, event.subType.exti);
-				char *text = "hello!";
 				USB_ACM_write((uint8_t*)text, sizeof(text));
-				break;
+				CAN_write(&txMsg);
+				} break;
 			case EVENT_SYSTICK:
 				switch (event.subType.systick) {
 					case ES_SYSTICK_TICK:

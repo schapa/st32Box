@@ -43,7 +43,7 @@ void SystemStatus_set(systemStatus_t status) {
 
 void SysTick_Handler(void) {
 	uint32_t period = s_timing[s_systemStatus].activeTime + s_timing[s_systemStatus].passiveTime;
-//	Event_t tick = { EVENT_SYSTICK, { ES_SYSTICK_TICK }, s_uptimeTicks };
+//	Event_t tick = { EVENT_SYSTICK, { ES_SYSTICK_TICK }, .data.intptr = s_uptimeTicks };
 //	BSP_queuePush(&tick);
 	if (s_systemLed)
 		s_systemLed(s_systemStatusTimer <= s_timing[s_systemStatus].activeTime);

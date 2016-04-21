@@ -26,19 +26,8 @@ void EXTI_baseInit(void) {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	Event_t event = { EVENT_EXTI, { ES_EXTI_DOWN }, {GPIO_Pin} };
+	Event_t event = { EVENT_EXTI, { ES_EXTI_DOWN }, { GPIO_Pin } };
 	BSP_queuePush(&event);
-	if (GPIO_Pin == GPIO_PIN_0) {
-//		s_canHandle->pTxMsg = malloc(sizeof(*s_canHandle->pTxMsg));
-//		memcpy(s_canHandle->pTxMsg->Data, "HELLO HJ", 8);
-//		s_canHandle->pTxMsg->DLC = 8;
-//		s_canHandle->pTxMsg->RTR = 0;
-//		s_canHandle->pTxMsg->IDE = 0;
-//		s_canHandle->pTxMsg->StdId = 0x22;
-//		HAL_StatusTypeDef stat = HAL_CAN_Transmit_IT(s_canHandle);
-//		trace_printf("Send [%d]\n\r", stat);
-
-	}
 }
 
 void EXTI0_IRQHandler(void) {
