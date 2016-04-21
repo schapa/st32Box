@@ -36,15 +36,16 @@ void BSP_init(void) {
 	initResult &= USART_tracerInit(pTraceUsart);
 	initResult &= CAN_init(pCan1Bus);
 
-	SystemStatus_set(INFORM_IDLE);
-	SystemStatus_setLedControl(Led_Green_SetState);
-	EXTI_baseInit();
-	PWM_Init();
-	USB_ACM_devInit();
-
 	HELP_printMessage();
 	HELP_dumpUsartProps(pTraceUsart);
 	HELP_dumpCANProps(pCan1Bus);
+
+	SystemStatus_set(INFORM_IDLE);
+	SystemStatus_setLedControl(Led_Green_SetState);
+
+	EXTI_baseInit();
+	PWM_Init();
+	USB_ACM_devInit();
 
 	if (initResult != HAL_OK) {
 		trace_printf("Init failed\n\r" \

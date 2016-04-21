@@ -25,12 +25,14 @@ int main(int argc, char* argv[]) {
 	BSP_init();
 //simpleTest();
 extern void QueryTest(void);
-QueryTest();
+//QueryTest();
 	while (true) {
 		Event_t event;
-		BSP_queuePendEvent(&event);
+		if (!BSP_queueIsEventPending(&event))
+			continue;
 		switch (event.type) {
 			case EVENT_EXTI: {
+				trace_printf("[Exti] pin %d act %d\n\r", event.data, event.subType.exti);
 				char *text = "hello !";
 				CanTxMsgTypeDef txMsg = {
 						0x22, 0,
@@ -39,17 +41,16 @@ QueryTest();
 						8,
 						{ text[0], text[1], text[2], text[3], text[4], text[5], text[6], text[7] }
 				};
-				trace_printf("[Exti] pin %d act %d\n\r", event.data, event.subType.exti);
-				USB_ACM_write((uint8_t*)text, sizeof(text));
+				USB_ACM_write((uint8_t*)text, strlen(text));
 				CAN_write(&txMsg);
 				} break;
 			case EVENT_SYSTICK:
 				switch (event.subType.systick) {
 					case ES_SYSTICK_TICK:
-						trace_printf("[Uptime] %d ticks\n\r", event.data);
+//						trace_printf("[Uptime] %d ticks\n\r", event.data);
 						break;
 					case ES_SYSTICK_SECOND_ELAPSED:
-						trace_printf("[Uptime] %d seconds\n\r", event.data);
+//						trace_printf("[Uptime] %d seconds\n\r", event.data);
 						break;
 				}
 				break;
@@ -95,6 +96,8 @@ QueryTest();
 						break;
 				}
 			} break;
+			case EVENT_DUMMY:
+				break;
 			default:
 				trace_printf("Unhandled Event type %p data %p!\n\r", event.type, event.data);
 				break;

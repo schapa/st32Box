@@ -59,26 +59,24 @@ _Bool Queue_pushEvent(EventQueue_p pQueue, Event_p pEvent) {
 
 _Bool Queue_getEvent(EventQueue_p pQueue, Event_p pEvent, _Bool isBlockingMode) {
 	_Bool result = false;
+	if (!pQueue || !pEvent)
+		return result;
 	do {
-		if (!pQueue || !pEvent)
-			break;
-		do {
-			__disable_irq();
-			EventQueue_p cur = isSameEvent(&pQueue->last->event, &s_dummyEvent) ? NULL : pQueue->last;
-			if (!cur && isBlockingMode) {
-				__enable_irq();
-				__WFI();
-			} else {
-				*pEvent = cur->event;
-				pQueue->last = findBeforeLocked(pQueue, cur);
-				if (pQueue->last)
-					pQueue->last->next = NULL;
-				free(cur);
-				result = true;
-			}
-		} while (!result && isBlockingMode);
-
-	} while (0);
+		__disable_irq();
+		EventQueue_p cur = isSameEvent(&pQueue->last->event, &s_dummyEvent) ? NULL : pQueue->last;
+		if (!cur && isBlockingMode) {
+			__enable_irq();
+			__WFI();
+		} else {
+			*pEvent = cur->event;
+			pQueue->last = findBeforeLocked(pQueue, cur);
+			if (pQueue->last)
+				pQueue->last->next = NULL;
+			free(cur);
+			result = true;
+		}
+	} while (!result && isBlockingMode);
+	__enable_irq();
 	return result;
 }
 

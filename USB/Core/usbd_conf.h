@@ -39,6 +39,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "diag/Trace.h"
+#include "memman.h"
+
 
 #define USBD_MAX_NUM_INTERFACES               1
 #define USBD_MAX_NUM_CONFIGURATION            1
@@ -62,8 +64,8 @@
 
 
  /* Memory management macros */   
-#define USBD_malloc               malloc
-#define USBD_free                 free
+#define USBD_malloc               MEMMAN_malloc
+#define USBD_free                 MEMMAN_free
 #define USBD_memset               memset
 #define USBD_memcpy               memcpy
     

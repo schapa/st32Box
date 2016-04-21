@@ -9,6 +9,7 @@
 #include "stm32f4xx_hal.h"
 #include "diag/Trace.h"
 #include "usbd_core.h"
+#include "memman.h"
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -39,8 +40,8 @@ USBD_StatusTypeDef USBD_LL_Init (USBD_HandleTypeDef *pDev) {
 	if (!pDev)
 		return USBD_FAIL;
 
-	free(handle);
-	handle = (PCD_HandleTypeDef*)malloc(sizeof(PCD_HandleTypeDef));
+	MEMMAN_free(handle);
+	handle = (PCD_HandleTypeDef*)MEMMAN_malloc(sizeof(PCD_HandleTypeDef));
 	if (!handle)
 		return USBD_FAIL;
 	handle->Init = iface;
@@ -59,7 +60,7 @@ USBD_StatusTypeDef USBD_LL_Init (USBD_HandleTypeDef *pDev) {
 
 USBD_StatusTypeDef USBD_LL_DeInit(USBD_HandleTypeDef *pdev) {
 	HAL_PCD_DeInit((PCD_HandleTypeDef*)pdev->pData);
-	free(pdev);
+	MEMMAN_free(pdev->pData);
 	return USBD_OK;
 }
 

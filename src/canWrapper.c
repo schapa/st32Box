@@ -12,6 +12,7 @@
 #include "canWrapper.h"
 #include "bsp.h"
 #include "diag/Trace.h"
+#include "memman.h"
 
 static CAN_HandleTypeDef *s_can1Handle = NULL;
 
@@ -44,8 +45,8 @@ HAL_StatusTypeDef CAN_init(CAN_HandleTypeDef *handle) {
 	};
 
 	if (handle) {
-		free(handle->pRxMsg);
-		free(handle->pTxMsg);
+		MEMMAN_free(handle->pRxMsg);
+		MEMMAN_free(handle->pTxMsg);
 		memset(handle, 0, sizeof(*handle));
 		handle->Instance = CAN1;
 		handle->Init = ifaceParams;
@@ -57,7 +58,7 @@ HAL_StatusTypeDef CAN_init(CAN_HandleTypeDef *handle) {
 			HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 			HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);
 //			HAL_NVIC_EnableIRQ(CAN1_SCE_IRQn);
-			handle->pRxMsg = malloc(sizeof(*handle->pRxMsg));
+			handle->pRxMsg = MEMMAN_malloc(sizeof(*handle->pRxMsg));
 			result &= HAL_CAN_Receive_IT(handle, CAN_FIFO0);
 		}
 		s_can1Handle = handle;
@@ -71,8 +72,8 @@ HAL_StatusTypeDef CAN_write(CanTxMsgTypeDef *txMsg) {
 	do {
 		if (!s_can1Handle || !txMsg)
 			break;
-		free(s_can1Handle->pTxMsg);
-		s_can1Handle->pTxMsg = malloc(msgSize);
+		MEMMAN_free(s_can1Handle->pTxMsg);
+		s_can1Handle->pTxMsg = MEMMAN_malloc(msgSize);
 		if (!s_can1Handle->pTxMsg)
 			break;
 		memcpy(s_can1Handle->pTxMsg, txMsg, msgSize);
