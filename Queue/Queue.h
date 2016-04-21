@@ -18,7 +18,7 @@ typedef struct Queue EventQueue_t, *EventQueue_p;
 struct Event {
 	EventTypes_t type;
 	EventSubTypes_t subType;
-	intptr_t data;
+	EventDataTypes_t data;
 };
 
 struct Queue {

@@ -15,10 +15,6 @@ static void initGPIO_CAN(void);
 static void initGPIO_PWM(void);
 static void initGPIO_USB(void);
 
-void HAL_MspInit(void) {
-	BSP_init();
-}
-
 void HAL_USART_MspInit(USART_HandleTypeDef *husart) {
 
 	if (husart->Instance == USART1) {

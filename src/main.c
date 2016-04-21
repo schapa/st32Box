@@ -1,9 +1,9 @@
-//
-// This file is part of the GNU ARM Eclipse distribution.
-// Copyright (c) 2014 Liviu Ionescu.
-//
-
-// ----------------------------------------------------------------------------
+/*
+ * main.c
+ *
+ *  Created on: Apr 21, 2016
+ *      Author: shapa
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,50 +13,26 @@
 #include "stm32f4xx_hal.h"
 
 #include "bsp.h"
-#include "canWrapper.h"
-#include "pwmWrapper.h"
-#include "systemStatus.h"
-#include "trigger.h"
-#include "usartWrapper.h"
+#include "USB_Generic.h"
 #include "misc.h"
-#include "systemStatus.h"
 
 int main(int argc, char* argv[]) {
 
 	(void)argc;
 	(void)argv;
 
-	USART_HandleTypeDef traceUsart;
-	CAN_HandleTypeDef can1Bus;
-	HAL_StatusTypeDef initResult = HAL_ERROR;
-
-	BSP_queueInit();
-	SystemStatus_set(INFORM_IDLE);
-	SystemStatus_setLedControl(Led_Green_SetState);
-
-	USART_tracerInit(&traceUsart);
-	initResult = CAN_init(&can1Bus);
-	InitTrigger(&can1Bus);
-
-	HELP_printMessage();
-	HELP_dumpUsartProps(&traceUsart);
-	HELP_dumpCANProps(&can1Bus);
-	if (initResult != HAL_OK)
-		trace_printf("Can init failed [%d] with code [%d]\n\r", initResult, can1Bus.ErrorCode);
-
-	PWM_Init();
-extern void USB_GenericInit(void);
-USB_GenericInit();
+	BSP_init();
 //simpleTest();
 extern void QueryTest(void);
 QueryTest();
-char buffer[50];
 	while (true) {
 		Event_t event;
-		BSP_queueWaitForEvent(&event);
+		BSP_queuePendEvent(&event);
 		switch (event.type) {
 			case EVENT_EXTI:
 				trace_printf("[Exti] pin %d act %d\n\r", event.data, event.subType.exti);
+				char *text = "hello!";
+				USB_ACM_write((uint8_t*)text, sizeof(text));
 				break;
 			case EVENT_SYSTICK:
 				switch (event.subType.systick) {
@@ -69,7 +45,7 @@ char buffer[50];
 				}
 				break;
 			case EVENT_USART: {
-				USART_HandleTypeDef *husart = (USART_HandleTypeDef*)event.data;
+				USART_HandleTypeDef *husart = event.data.usart.hUsart;
 				switch (event.subType.uxart) {
 					case ES_UsART_RX:
 						trace_printf("[USART_RX] id [%d] state %d\n\r",
@@ -90,6 +66,23 @@ char buffer[50];
 					case ES_UsART_ERROR:
 						trace_printf("[USART_ERROR] id [%d] state %d errno %d\n\r",
 								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart), HAL_USART_GetError(husart));
+						break;
+				}
+			} break;
+			case EVENT_CAN: {
+				CAN_HandleTypeDef *hcan = event.data.can.hCan;
+				switch (event.subType.can) {
+					case ES_CAN_RX: {
+						CanRxMsgTypeDef *rx = &event.data.can.rxMsg;
+						HELP_dumpCANRxMsg(rx);
+						} break;
+					case ES_CAN_TX: {
+						CanTxMsgTypeDef *tx = &event.data.can.txMsg;
+						trace_printf("[CAN] tx [%p] ok\n\r", tx->IDE ? tx->ExtId : tx->StdId);
+						} break;
+					case ES_CAN_ERROR:
+						trace_printf("[CAN_ERROR] id [%d] state %d errno %d\n\r",
+								HELP_getCanIdByHandle(hcan), HAL_CAN_GetState(hcan), HAL_CAN_GetError(hcan));
 						break;
 				}
 			} break;

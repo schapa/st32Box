@@ -19,6 +19,7 @@ static const char *usartStrParity(uint32_t parity);
 static const char *usartStrMode(uint32_t mode);
 
 static const char *canStrGPIO(CAN_TypeDef *handle);
+static uint32_t canIdByHandle(CAN_TypeDef *can);
 
 static const char *const delim = "----------------------------------------------------";
 
@@ -44,13 +45,29 @@ void HELP_dumpUsartProps(USART_HandleTypeDef *traceUsart) {
 
 void HELP_dumpCANProps(CAN_HandleTypeDef *canBus) {
 	if (canBus) {
-		trace_printf("CAN_%d\n\r", canBus->Instance == CAN1 ? 1 : 2);
+		trace_printf("CAN_%d\n\r", canIdByHandle(canBus->Instance));
 		trace_printf("\t        Pins: %s\n\r", canStrGPIO(canBus->Instance));
+	}
+}
+
+void HELP_dumpCANRxMsg(CanRxMsgTypeDef *msg) {
+	uint32_t id = msg->IDE ? msg->ExtId : msg->StdId;
+	if (msg->RTR) {
+		trace_printf("RTR [%p] \n\r", id);
+	} else {
+		trace_printf("DLC [%p] = [", id);
+		for (uint32_t i = 0; i < msg->DLC; i++)
+			trace_printf(" %d", msg->Data[i]);
+		trace_printf("] = %d\n\r", msg->DLC);
 	}
 }
 
 uint32_t HELP_getUsartIdByHandle(USART_HandleTypeDef *traceUsart) {
 	return traceUsart ? usartIdByHandle(traceUsart->Instance) : -1;
+}
+
+uint32_t HELP_getCanIdByHandle(CAN_HandleTypeDef *canBus) {
+	return canBus ? canIdByHandle(canBus->Instance) : -1;
 }
 
 
@@ -80,6 +97,26 @@ static uint32_t usartIdByHandle(USART_TypeDef *usart) {
 	uint32_t id = 0;
 	for (i = 0; i < elementsCount; i++) {
 		if (usart == elements[i].handle) {
+			id = elements[i].id;
+			break;
+		}
+	}
+	return id;
+}
+
+static uint32_t canIdByHandle(CAN_TypeDef *can) {
+	static const struct {
+		CAN_TypeDef *handle;
+		uint32_t id;
+	} elements[] = {
+			{ CAN1, 1 },
+			{ CAN2, 2 },
+	};
+	static const size_t elementsCount = sizeof(elements)/sizeof(*elements);
+	size_t i;
+	uint32_t id = 0;
+	for (i = 0; i < elementsCount; i++) {
+		if (can == elements[i].handle) {
 			id = elements[i].id;
 			break;
 		}

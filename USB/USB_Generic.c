@@ -16,18 +16,32 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-USBD_HandleTypeDef USBD_Device;
+#include "USB_Generic.h"
 
-void USB_GenericInit(void) {
-	extern USBD_DescriptorsTypeDef VCP_Desc;
-	extern USBD_ClassTypeDef USBD_CDC;
+static USBD_HandleTypeDef USBD_Device;
+
+void USB_ACM_devInit(void) {
 	extern USBD_CDC_ItfTypeDef SHPA_CDC_FOPS;
 
-	USBD_Init(&USBD_Device, &VCP_Desc, 0x32);
-	USBD_RegisterClass(&USBD_Device, &USBD_CDC);
+	USBD_Init(&USBD_Device, USBD_ACM_DSC, 0x32);
+	USBD_RegisterClass(&USBD_Device, USBD_CDC_CLASS);
 	USBD_CDC_RegisterInterface(&USBD_Device, &SHPA_CDC_FOPS);
 
 	USBD_Start(&USBD_Device);
+}
+
+size_t USB_ACM_write(uint8_t *pBuff, size_t size) {
+	size_t written = 0;
+	void *cpy = NULL;
+	__disable_irq();
+	cpy = malloc(size);
+	__enable_irq();
+	if (cpy) {
+		memcpy(cpy, pBuff, size);
+	    USBD_CDC_SetTxBuffer(&USBD_Device, cpy, size);
+	    USBD_CDC_TransmitPacket(&USBD_Device);
+	}
+	return written;
 }
 
 /* interrupts */

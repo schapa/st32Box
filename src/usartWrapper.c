@@ -74,18 +74,26 @@ void USART2_IRQHandler(void) {
 
 
 void HAL_USART_RxCpltCallback(USART_HandleTypeDef *husart) {
-	Event_t event = { EVENT_USART, { ES_UsART_RX }, (intptr_t)husart };
+	Event_t event = { EVENT_USART, { ES_UsART_RX },
+			.data.usart = { husart }
+	};
 	BSP_queuePush(&event);
 }
 void HAL_USART_TxCpltCallback(USART_HandleTypeDef *husart) {
-	Event_t event = { EVENT_USART, { ES_UsART_TX }, (intptr_t)husart };
+	Event_t event = { EVENT_USART, { ES_UsART_TX },
+			.data.usart = { husart }
+	};
 	BSP_queuePush(&event);
 }
 void HAL_USART_TxRxCpltCallback(USART_HandleTypeDef *husart) {
-	Event_t event = { EVENT_USART, { ES_UsART_RXTX }, (intptr_t)husart };
+	Event_t event = { EVENT_USART, { ES_UsART_RXTX },
+			.data.usart = { husart }
+	};
 	BSP_queuePush(&event);
 }
 void HAL_USART_ErrorCallback(USART_HandleTypeDef *husart) {
-	Event_t event = { EVENT_USART, { ES_UsART_ERROR }, (intptr_t)husart };
+	Event_t event = { EVENT_USART, { ES_UsART_ERROR },
+			.data.usart = { husart }
+	};
 	BSP_queuePush(&event);
 }

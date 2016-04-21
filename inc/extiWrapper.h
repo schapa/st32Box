@@ -5,12 +5,12 @@
  *      Author: shapa
  */
 
-#ifndef TRIGGER_H_
-#define TRIGGER_H_
+#ifndef EXTIWRAPPER_H_
+#define EXTIWRAPPER_H_
 
 #include "stm32f4xx_hal.h"
 
-void InitTrigger(CAN_HandleTypeDef *can);
+void EXTI_baseInit(void);
 
 
-#endif /* TRIGGER_H_ */
+#endif /* EXTIWRAPPER_H_ */

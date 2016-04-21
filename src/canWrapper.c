@@ -5,11 +5,13 @@
  *      Author: shapa
  */
 
-#include "canWrapper.h"
 
-#include "diag/Trace.h"
 #include <string.h>
 #include <stdlib.h>
+
+#include "canWrapper.h"
+#include "bsp.h"
+#include "diag/Trace.h"
 
 static CAN_HandleTypeDef *s_can1Handle = NULL;
 
@@ -42,6 +44,7 @@ HAL_StatusTypeDef CAN_init(CAN_HandleTypeDef *handle) {
 	};
 
 	if (handle) {
+		free(handle->pRxMsg);
 		memset(handle, 0, sizeof(*handle));
 		handle->Instance = CAN1;
 		handle->Init = ifaceParams;
@@ -61,7 +64,40 @@ HAL_StatusTypeDef CAN_init(CAN_HandleTypeDef *handle) {
 	return result;
 }
 
+void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
+	if (hcan && hcan->pTxMsg) {
+		Event_t event = { EVENT_CAN, { ES_CAN_TX },
+				.data.can = {
+						hcan,
+						.txMsg = *hcan->pTxMsg
+				}
+		};
+		free(hcan->pTxMsg);
+		BSP_queuePush(&event);
+	}
+}
 
+void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
+	if (hcan && hcan->pRxMsg) {
+		Event_t event = { EVENT_CAN, { ES_CAN_RX },
+				.data.can = {
+						hcan,
+						.rxMsg = *hcan->pRxMsg
+				}
+		};
+		BSP_queuePush(&event);
+		HAL_CAN_Receive_IT(hcan, CAN_FIFO0);
+	}
+}
+
+void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
+	if (hcan) {
+		Event_t event = { EVENT_CAN, { ES_CAN_ERROR },
+				.data.can = { hcan }
+		};
+		BSP_queuePush(&event);
+	}
+}
 
 void CAN1_TX_IRQHandler(void) {
 	HAL_CAN_IRQHandler(s_can1Handle);
@@ -74,19 +110,4 @@ void CAN1_RX1_IRQHandler(void) {
 }
 void CAN1_SCE_IRQHandler(void) {
 	HAL_CAN_IRQHandler(s_can1Handle);
-}
-
-void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
-
-	uint32_t id = hcan->pRxMsg->IDE ? hcan->pRxMsg->ExtId : hcan->pRxMsg->StdId;
-	if (hcan->pRxMsg->RTR) {
-		trace_printf("RTR [%p] \n\r", id);
-	} else {
-		trace_printf("DLC [%p] = [", id);
-		for (uint32_t i = 0; i < hcan->pRxMsg->DLC; i++)
-			trace_printf(" %d", hcan->pRxMsg->Data[i]);
-		trace_printf("] = %d\n\r", hcan->pRxMsg->DLC);
-	}
-
-	HAL_CAN_Receive_IT(hcan, CAN_FIFO0);
 }

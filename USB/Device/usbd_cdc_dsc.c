@@ -1,5 +1,5 @@
 /*
- * USB_VCP_DSC.c
+ * usbd_cdc_dsc.c
  *
  *  Created on: Apr 13, 2016
  *      Author: shapa
@@ -8,6 +8,7 @@
 
 #include "usbd_core.h"
 #include "usbd_conf.h"
+#include "usbd_dev_dsc.h"
 
 #define USBD_VCP_VID                      0x0483
 #define USBD_VCP_PID                      0x5740
@@ -30,7 +31,7 @@ static uint8_t* serialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t* configStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t* interfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 
-USBD_DescriptorsTypeDef VCP_Desc = {
+USBD_DescriptorsTypeDef USBD_CDC_ACM_DSC = {
 	deviceDescriptor,
 	langIDStrDescriptor,
 	manufacturerStrDescriptor,
@@ -40,7 +41,7 @@ USBD_DescriptorsTypeDef VCP_Desc = {
 	interfaceStrDescriptor,
 };
 
-uint8_t USBD_VCP_DeviceDesc[USB_LEN_DEV_DESC] = {
+static uint8_t USBD_VCP_DeviceDesc[USB_LEN_DEV_DESC] = {
 	0x12,                       /* bLength */
 	USB_DESC_TYPE_DEVICE,       /* bDescriptorType */
 	0x00,                       /* bcdUSB */
@@ -62,10 +63,10 @@ uint8_t USBD_VCP_DeviceDesc[USB_LEN_DEV_DESC] = {
 }; /* USB_DeviceDescriptor */
 
 static uint8_t* s_langIDDesc[USB_LEN_LANGID_STR_DESC] = {
-	USB_LEN_LANGID_STR_DESC,
-	USB_DESC_TYPE_STRING,
-	LOBYTE(USBD_VCP_LANGID_STRING),
-	HIBYTE(USBD_VCP_LANGID_STRING),
+	(uint8_t*)USB_LEN_LANGID_STR_DESC,
+	(uint8_t*)USB_DESC_TYPE_STRING,
+	(uint8_t*)LOBYTE(USBD_VCP_LANGID_STRING),
+	(uint8_t*)HIBYTE(USBD_VCP_LANGID_STRING),
 };
 
 static uint8_t s_strDesc[USBD_MAX_STR_DESC_SIZ];

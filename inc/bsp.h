@@ -14,9 +14,9 @@
 
 void BSP_init(void);
 
-void BSP_queueInit(void);
 void BSP_queuePush(Event_p pEvent);
-void BSP_queueWaitForEvent(Event_p pEvent);
+void BSP_queuePendEvent(Event_p pEvent);
+_Bool BSP_queueIsEventPending(Event_p pEvent);
 
 void Led_Red_SetState(FunctionalState state);
 void Led_Green_SetState(FunctionalState state);
