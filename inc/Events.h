@@ -16,6 +16,7 @@ typedef enum {
 	EVENT_EXTI,
 	EVENT_UART,
 	EVENT_USART,
+	EVENT_UxART_Buffer,
 	EVENT_CAN,
 	EVENT_LAST
 } EventTypes_t;
@@ -31,17 +32,19 @@ typedef enum {
 } ExtiSubTypes_t;
 
 typedef enum {
-	ES_UsART_RX,
-	ES_UsART_TX,
-	ES_UsART_RXTX,
-	ES_UsART_ERROR
-} UsartSubTypes_t;
+	ES_UxART_RX,
+	ES_UxART_TX,
+	ES_UxART_RXTX,
+	ES_UxART_ERROR
+} UxartSubTypes_t;
 typedef struct {
-	USART_HandleTypeDef *hUsart;
-} UsartDataTypes_t;
-typedef struct {
-	UART_HandleTypeDef *hUart;
-} UartDataTypes_t;
+	union {
+		USART_HandleTypeDef *hUsart;
+		UART_HandleTypeDef *hUart;
+	};
+	intptr_t buffer;
+	size_t size;
+} UxartDataTypes_t;
 
 typedef enum {
 	ES_CAN_RX,
@@ -59,18 +62,15 @@ typedef struct {
 typedef union {
 	SystickSubTypes_t systick;
 	ExtiSubTypes_t exti;
-	UsartSubTypes_t uxart;
+	UxartSubTypes_t uxart;
 	CanSubTypes_t can;
 } EventSubTypes_t;
 
 typedef union {
 	intptr_t intptr;
-	UsartDataTypes_t usart;
-	UartDataTypes_t uart;
+	UxartDataTypes_t uxart;
 	CanDataTypes_t can;
 } EventDataTypes_t;
-
-
 
 
 #endif /* EVENTS_H_ */

@@ -76,6 +76,7 @@ trace_write (const char* buf __attribute__((unused)),
 //  return _trace_write_semihosting_debug(buf, nbyte);
   extern int trace_write_usart(const char *buf, size_t nbyte);
   return trace_write_usart(buf, nbyte);
+  (void)_trace_write_semihosting_debug;
 #endif
 
   return -1;

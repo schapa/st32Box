@@ -11,8 +11,8 @@
 
 #include "canWrapper.h"
 #include "bsp.h"
-#include "diag/Trace.h"
 #include "memman.h"
+#include "misc.h"
 
 static CAN_HandleTypeDef *s_can1Handle = NULL;
 
@@ -82,6 +82,27 @@ HAL_StatusTypeDef CAN_write(CanTxMsgTypeDef *txMsg) {
 	return status;
 }
 
+void CAN_handleEvent(Event_p event) {
+
+	if (!event)
+		return;
+	CAN_HandleTypeDef *hcan = event->data.can.hCan;
+	CanRxMsgTypeDef *rx = &event->data.can.rxMsg;
+	switch (event->subType.can) {
+		case ES_CAN_RX:
+			HELP_dumpCANRxMsg(rx);
+			break;
+		case ES_CAN_TX: {
+			CanTxMsgTypeDef *tx = &event->data.can.txMsg;
+			trace_printf("[CAN] tx [%p] ok\n\r", tx->IDE ? tx->ExtId : tx->StdId);
+			} break;
+		case ES_CAN_ERROR:
+			trace_printf("[CAN_ERROR] id [%d] state %p errno %d\n\r",
+					HELP_getCanIdByHandle(hcan), HAL_CAN_GetState(hcan), HAL_CAN_GetError(hcan));
+			break;
+	}
+}
+
 void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
 	if (hcan && hcan->pTxMsg) {
 		Event_t event = { EVENT_CAN, { ES_CAN_TX },
@@ -90,7 +111,7 @@ void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
 						.txMsg = *hcan->pTxMsg
 				}
 		};
-		free(hcan->pTxMsg);
+		MEMMAN_free(hcan->pTxMsg);
 		BSP_queuePush(&event);
 	}
 }

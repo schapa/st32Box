@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "diag/Trace.h"
+#include "misc.h"
 
 static _Bool makeStep(Request_p req);
 

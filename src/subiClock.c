@@ -6,7 +6,6 @@
  */
 
 #include <stdint.h>
-#include "diag/Trace.h"
 #include "stm32f4xx_hal.h"
 
 #include "systemStatus.h"

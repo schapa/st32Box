@@ -9,11 +9,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include "diag/Trace.h"
 #include "stm32f4xx_hal.h"
 
 #include "bsp.h"
 #include "USB_Generic.h"
+#include "uartWrapper.h"
 #include "canWrapper.h"
 #include "misc.h"
 
@@ -21,8 +21,6 @@ int main(int argc, char* argv[]) {
 
 	(void)argc;
 	(void)argv;
-	char buff[60];
-	snprintf(buff, 60, "hello!sdf");
 
 	BSP_init();
 //simpleTest();
@@ -46,67 +44,33 @@ QueryTest();
 				USB_ACM_write((uint8_t*)text, strlen(text));
 				CAN_write(&txMsg);
 				} break;
-			case EVENT_SYSTICK:
-				switch (event.subType.systick) {
-					case ES_SYSTICK_TICK:
-//						trace_printf("[Uptime] %d ticks\n\r", event.data);
-						break;
-					case ES_SYSTICK_SECOND_ELAPSED:
-//						trace_printf("[Uptime] %d seconds\n\r", event.data);
-						break;
-				}
+			case EVENT_UART:
+				UART_handleEvent(&event);
 				break;
-			case EVENT_UART: {
-				UART_HandleTypeDef *husart = event.data.uart.hUart;
-				int i;
+			case EVENT_UxART_Buffer: {
+				UART_HandleTypeDef *huart = event.data.uxart.hUart;
+				uint8_t *buff = (uint8_t *)event.data.uxart.buffer;
+				size_t size = event.data.uxart.size;
+				size_t i;
 				switch (event.subType.uxart) {
-					case ES_UsART_RX:
-						trace_printf("[USART_RX] id [%d] state %d\n\r",
-								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart));
-						trace_printf("\t %d [", husart->RxXferSize);
-
-						HAL_UART_Receive_IT(husart, buff, 8);
-						for(i = 0; i < husart->RxXferSize; i++) {
-							trace_printf(" %c", husart->pRxBuffPtr[i]);
-						}
-						trace_printf("]\r\n");
+					case ES_UxART_RX:
+						trace_printf("[rx] %s\n\r", buff);
+//						trace_printf("[UxART_Buffer] id [%d] state %p\n\r",
+//								HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart));
+//						trace_printf("\t %d [", size);
+//						for(i = 0; i < size; i++) {
+//							trace_printf(" %c", buff[i]);
+//						}
+//						trace_printf("]\r\n");
 						break;
-					case ES_UsART_TX:
-						trace_printf("[USART_TX] id [%d] state %d\n\r",
-								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart));
-						trace_printf("\t tx %d from %d\n\r", husart->TxXferCount, husart->TxXferSize);
-						HAL_UART_Receive_IT(husart, buff, husart->TxXferSize);
-						husart->TxXferSize = 0;
-						break;
-					case ES_UsART_RXTX:
-						trace_printf("[USART_RXTX] id [%d] state %d\n\r",
-								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart));
-						trace_printf("\t tx %d from %d\n\r", husart->TxXferCount, husart->TxXferSize);
-						trace_printf("\t rx %d from %d\n\r", husart->RxXferCount, husart->RxXferSize);
-						break;
-					case ES_UsART_ERROR:
-						trace_printf("[USART_ERROR] id [%d] state %d errno %d\n\r",
-								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart), HAL_USART_GetError(husart));
+					default:
 						break;
 				}
 			} break;
-			case EVENT_CAN: {
-				CAN_HandleTypeDef *hcan = event.data.can.hCan;
-				switch (event.subType.can) {
-					case ES_CAN_RX: {
-						CanRxMsgTypeDef *rx = &event.data.can.rxMsg;
-						HELP_dumpCANRxMsg(rx);
-						} break;
-					case ES_CAN_TX: {
-						CanTxMsgTypeDef *tx = &event.data.can.txMsg;
-						trace_printf("[CAN] tx [%p] ok\n\r", tx->IDE ? tx->ExtId : tx->StdId);
-						} break;
-					case ES_CAN_ERROR:
-						trace_printf("[CAN_ERROR] id [%d] state %d errno %d\n\r",
-								HELP_getCanIdByHandle(hcan), HAL_CAN_GetState(hcan), HAL_CAN_GetError(hcan));
-						break;
-				}
-			} break;
+			case EVENT_CAN:
+				CAN_handleEvent(&event);
+				break;
+			case EVENT_SYSTICK:
 			case EVENT_DUMMY:
 				break;
 			default:

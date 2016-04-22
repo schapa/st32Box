@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stm32f4xx_hal.h"
-#include "diag/Trace.h"
 
 static Event_t s_dummyEvent;
 

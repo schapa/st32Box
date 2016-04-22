@@ -5,8 +5,6 @@
  *      Author: shapa
  */
 
-
-#include "diag/Trace.h"
 #include "stm32f4xx_hal.h"
 #include "misc.h"
 
@@ -62,8 +60,12 @@ void HELP_dumpCANRxMsg(CanRxMsgTypeDef *msg) {
 	}
 }
 
-uint32_t HELP_getUsartIdByHandle(USART_HandleTypeDef *traceUsart) {
-	return traceUsart ? usartIdByHandle(traceUsart->Instance) : 0;
+uint32_t HELP_getUsartIdByHandle(USART_HandleTypeDef *usart) {
+	return usart ? usartIdByHandle(usart->Instance) : 0;
+}
+
+uint32_t HELP_getUartIdByHandle(UART_HandleTypeDef *uart) {
+	return uart ? usartIdByHandle(uart->Instance) : 0;
 }
 
 uint32_t HELP_getCanIdByHandle(CAN_HandleTypeDef *canBus) {
@@ -90,7 +92,11 @@ static uint32_t usartIdByHandle(USART_TypeDef *usart) {
 			{ USART1, 1 },
 			{ USART2, 2 },
 			{ USART3, 3 },
+			{ UART4, 4 },
+			{ UART5, 5 },
 			{ USART6, 6 },
+			{ UART7, 7 },
+			{ UART8, 8 },
 	};
 	static const size_t elementsCount = sizeof(elements)/sizeof(*elements);
 	size_t i;
@@ -132,6 +138,7 @@ static const char *usartStrGPIO(USART_TypeDef *usart) {
 			{ USART1, "TX:PA9 RX:PA10" },
 			{ USART2, "TX:PD5 RX:PD6" },
 			{ USART3, "(Unknown)" },
+			{ UART3,  "TX:PC10 RX:PC11" },
 			{ USART6, "(Unknown)" },
 	};
 	static const size_t elementsCount = sizeof(elements)/sizeof(*elements);
