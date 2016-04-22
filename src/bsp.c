@@ -20,9 +20,8 @@
 #include "USB_Generic.h"
 
 static void initGPIO_LED(void);
-static void initQueue(void);
 
-static EventQueue_p s_eventQueue;
+static volatile EventQueue_p s_eventQueue;
 static USART_HandleTypeDef s_traceUsart;
 static CAN_HandleTypeDef s_can1Bus;
 
@@ -32,7 +31,6 @@ void BSP_init(void) {
 	CAN_HandleTypeDef *pCan1Bus = &s_can1Bus;
 	HAL_StatusTypeDef initResult = HAL_OK;
 	initGPIO_LED();
-	initQueue();
 
 	initResult &= USART1_InitTrace(pTraceUsart);
 	initResult &= CAN_init(pCan1Bus);
@@ -58,15 +56,17 @@ void BSP_init(void) {
 }
 
 void BSP_queuePush(Event_p pEvent) {
-	Queue_pushEvent(s_eventQueue, pEvent);
+	s_eventQueue = Queue_pushEvent(s_eventQueue, pEvent);
 }
 
-void BSP_queuePendEvent(Event_p pEvent) {
-	Queue_getEvent(s_eventQueue, pEvent, true);
+void BSP_pendEvent(Event_p pEvent) {
+	while (!s_eventQueue);
+	s_eventQueue = Queue_getEvent(s_eventQueue, pEvent);
 }
 
 _Bool BSP_queueIsEventPending(Event_p pEvent) {
-	return Queue_getEvent(s_eventQueue, pEvent, false);
+	s_eventQueue = Queue_getEvent(s_eventQueue, pEvent);
+	return !!s_eventQueue;
 }
 
 void Led_Red_SetState(FunctionalState state) {
@@ -89,12 +89,4 @@ static void initGPIO_LED(void) {
 			0
 	};
 	HAL_GPIO_Init(GPIOG, &iface);
-}
-
-static void initQueue(void) {
-	static _Bool init = false;
-	if (!init) {
-		Queue_new(&s_eventQueue);
-		init = true;
-	}
 }

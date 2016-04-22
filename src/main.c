@@ -28,8 +28,7 @@ extern void QueryTest(void);
 QueryTest();
 	while (true) {
 		Event_t event;
-		if (!BSP_queueIsEventPending(&event))
-			continue;
+		BSP_pendEvent(&event);
 		switch (event.type) {
 			case EVENT_EXTI: {
 				trace_printf("[Exti] pin %d act %d\n\r", event.data, event.subType.exti);
@@ -44,14 +43,18 @@ QueryTest();
 				USB_ACM_write((uint8_t*)text, strlen(text));
 				CAN_write(&txMsg);
 				} break;
+			case EVENT_SYSTICK:
+//				if (event.subType.systick == ES_SYSTICK_SECOND_ELAPSED)
+//					trace_printf("[SYSTICK_SECOND_ELAPSED] %d\n\r", event.data.intptr);
+				break;
 			case EVENT_UART:
 				UART_handleEvent(&event);
 				break;
 			case EVENT_UxART_Buffer: {
-				UART_HandleTypeDef *huart = event.data.uxart.hUart;
 				uint8_t *buff = (uint8_t *)event.data.uxart.buffer;
-				size_t size = event.data.uxart.size;
-				size_t i;
+//				UART_HandleTypeDef *huart = event.data.uxart.hUart;
+//				size_t size = event.data.uxart.size;
+//				size_t i;
 				switch (event.subType.uxart) {
 					case ES_UxART_RX:
 						trace_printf("[rx] %s\n\r", buff);
@@ -70,7 +73,6 @@ QueryTest();
 			case EVENT_CAN:
 				CAN_handleEvent(&event);
 				break;
-			case EVENT_SYSTICK:
 			case EVENT_DUMMY:
 				break;
 			default:

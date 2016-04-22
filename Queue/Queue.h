@@ -27,9 +27,8 @@ struct Queue {
 	EventQueue_p last;
 };
 
-_Bool Queue_new(EventQueue_p *pQueue);
-_Bool Queue_pushEvent(EventQueue_p pQueue, Event_p pEvent);
-_Bool Queue_getEvent(EventQueue_p pQueue, Event_p pEvent, _Bool isBlockingMode);
+EventQueue_p Queue_pushEvent(EventQueue_p pQueue, Event_p pEvent);
+EventQueue_p Queue_getEvent(EventQueue_p pQueue, Event_p pEvent);
 
 
 #endif /* QUEUE_H_ */

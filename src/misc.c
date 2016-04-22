@@ -138,7 +138,7 @@ static const char *usartStrGPIO(USART_TypeDef *usart) {
 			{ USART1, "TX:PA9 RX:PA10" },
 			{ USART2, "TX:PD5 RX:PD6" },
 			{ USART3, "(Unknown)" },
-			{ UART3,  "TX:PC10 RX:PC11" },
+			{ UART4,  "TX:PC10 RX:PC11" },
 			{ USART6, "(Unknown)" },
 	};
 	static const size_t elementsCount = sizeof(elements)/sizeof(*elements);
