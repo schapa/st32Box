@@ -9,8 +9,9 @@
 
 #include "bsp.h"
 
-static void initGPIO_UARTtrace(void);
-static void initGPIO_UARTclock(void);
+static void initGPIO_USART1_Trace(void);
+static void initGPIO_USART2(void);
+static void initGPIO_UART4(void);
 static void initGPIO_CAN(void);
 static void initGPIO_PWM(void);
 static void initGPIO_USB(void);
@@ -20,11 +21,20 @@ void HAL_USART_MspInit(USART_HandleTypeDef *husart) {
 	if (husart->Instance == USART1) {
 		__HAL_RCC_GPIOA_CLK_ENABLE();
 		__HAL_RCC_USART1_CLK_ENABLE();
-		initGPIO_UARTtrace();
+		initGPIO_USART1_Trace();
 	} else if (husart->Instance == USART2) {
 		__HAL_RCC_GPIOD_CLK_ENABLE();
 		__HAL_RCC_USART2_CLK_ENABLE();
-		initGPIO_UARTclock();
+		initGPIO_USART2();
+	}
+}
+
+void HAL_UART_MspInit(UART_HandleTypeDef *husart) {
+
+	if (husart->Instance == UART4) {
+		__HAL_RCC_GPIOC_CLK_ENABLE();
+		__HAL_RCC_UART4_CLK_ENABLE();
+		initGPIO_UART4();
 	}
 }
 
@@ -68,7 +78,7 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd) {
 }
 
 
-static void initGPIO_UARTtrace(void) {
+static void initGPIO_USART1_Trace(void) {
 
 	GPIO_InitTypeDef iface = {
 			GPIO_PIN_9 | GPIO_PIN_10,
@@ -80,7 +90,7 @@ static void initGPIO_UARTtrace(void) {
 	HAL_GPIO_Init(GPIOA, &iface);
 }
 
-static void initGPIO_UARTclock(void) {
+static void initGPIO_USART2(void) {
 
 	GPIO_InitTypeDef iface = {
 			GPIO_PIN_5 | GPIO_PIN_6,
@@ -90,6 +100,18 @@ static void initGPIO_UARTclock(void) {
 			GPIO_AF7_USART2
 	};
 	HAL_GPIO_Init(GPIOD, &iface);
+}
+
+static void initGPIO_UART4(void) {
+
+	GPIO_InitTypeDef iface = {
+			GPIO_PIN_10 | GPIO_PIN_11,
+			GPIO_MODE_AF_PP,
+			GPIO_NOPULL,
+			GPIO_SPEED_FREQ_LOW,
+			GPIO_AF8_UART4
+	};
+	HAL_GPIO_Init(GPIOC, &iface);
 }
 
 static void initGPIO_CAN() {

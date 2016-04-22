@@ -14,7 +14,7 @@
 static USART_HandleTypeDef *s_tracerHandle = NULL;
 static USART_HandleTypeDef *s_deviceHandle = NULL;
 
-HAL_StatusTypeDef USART_tracerInit(USART_HandleTypeDef *handle) {
+HAL_StatusTypeDef USART1_InitTrace(USART_HandleTypeDef *handle) {
 
 	HAL_StatusTypeDef result = HAL_ERROR;
 	USART_InitTypeDef ifaceParams = {
@@ -36,7 +36,7 @@ HAL_StatusTypeDef USART_tracerInit(USART_HandleTypeDef *handle) {
 	return result;
 }
 
-HAL_StatusTypeDef USART_deviceInit(USART_HandleTypeDef *handle, uint32_t baudRate) {
+HAL_StatusTypeDef USART2_Init(USART_HandleTypeDef *handle, uint32_t baudRate) {
 
 	HAL_StatusTypeDef result = HAL_ERROR;
 	USART_InitTypeDef ifaceParams = {

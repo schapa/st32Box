@@ -11,7 +11,7 @@
 
 #include "bsp.h"
 #include "misc.h"
-#include "usartWrapper.h"
+#include "uartWrapper.h"
 
 #define CRLF "\r\n"
 
@@ -55,7 +55,7 @@ static Step_t steps[] = {
 };
 
 static char queryBuffer[1024];
-static USART_HandleTypeDef s_usart;
+static UART_HandleTypeDef s_uart;
 
 static Request_t testReq = {
 		0, QUERY_INIT,
@@ -67,12 +67,12 @@ static Request_t testReq = {
 void QueryTest(void) {
 	static _Bool init;
 	if (!init) {
-		USART_deviceInit(&s_usart, 115200);
-		HELP_dumpUsartProps(&s_usart);
+		UART4_Init(&s_uart, 115200);
+//		HELP_dumpUsartProps(&s_uart);
 		init = true;
 	}
 	if ((testReq.state != QUERY_FAILED) && (testReq.state != QUERY_DONE)) {
 		QueryProcess(&testReq);
-		HAL_USART_Transmit_IT(&s_usart, (uint8_t*)testReq.buffer, testReq.bufferOccupied);
+		HAL_UART_Transmit_IT(&s_uart, (uint8_t*)testReq.buffer, testReq.bufferOccupied);
 	}
 }

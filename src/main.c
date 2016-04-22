@@ -21,11 +21,13 @@ int main(int argc, char* argv[]) {
 
 	(void)argc;
 	(void)argv;
+	char buff[60];
+	snprintf(buff, 60, "hello!sdf");
 
 	BSP_init();
 //simpleTest();
 extern void QueryTest(void);
-//QueryTest();
+QueryTest();
 	while (true) {
 		Event_t event;
 		if (!BSP_queueIsEventPending(&event))
@@ -54,18 +56,27 @@ extern void QueryTest(void);
 						break;
 				}
 				break;
-			case EVENT_USART: {
-				USART_HandleTypeDef *husart = event.data.usart.hUsart;
+			case EVENT_UART: {
+				UART_HandleTypeDef *husart = event.data.uart.hUart;
+				int i;
 				switch (event.subType.uxart) {
 					case ES_UsART_RX:
 						trace_printf("[USART_RX] id [%d] state %d\n\r",
 								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart));
-						trace_printf("\t rx %d from %d\n\r", husart->RxXferCount, husart->RxXferSize);
+						trace_printf("\t %d [", husart->RxXferSize);
+
+						HAL_UART_Receive_IT(husart, buff, 8);
+						for(i = 0; i < husart->RxXferSize; i++) {
+							trace_printf(" %c", husart->pRxBuffPtr[i]);
+						}
+						trace_printf("]\r\n");
 						break;
 					case ES_UsART_TX:
 						trace_printf("[USART_TX] id [%d] state %d\n\r",
 								HELP_getUsartIdByHandle(husart), HAL_USART_GetState(husart));
 						trace_printf("\t tx %d from %d\n\r", husart->TxXferCount, husart->TxXferSize);
+						HAL_UART_Receive_IT(husart, buff, husart->TxXferSize);
+						husart->TxXferSize = 0;
 						break;
 					case ES_UsART_RXTX:
 						trace_printf("[USART_RXTX] id [%d] state %d\n\r",

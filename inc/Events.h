@@ -39,6 +39,9 @@ typedef enum {
 typedef struct {
 	USART_HandleTypeDef *hUsart;
 } UsartDataTypes_t;
+typedef struct {
+	UART_HandleTypeDef *hUart;
+} UartDataTypes_t;
 
 typedef enum {
 	ES_CAN_RX,
@@ -63,6 +66,7 @@ typedef union {
 typedef union {
 	intptr_t intptr;
 	UsartDataTypes_t usart;
+	UartDataTypes_t uart;
 	CanDataTypes_t can;
 } EventDataTypes_t;
 

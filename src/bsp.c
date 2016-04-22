@@ -11,6 +11,7 @@
 #include "bsp.h"
 #include "stm32f4xx_hal.h"
 #include "misc.h"
+#include "uartWrapper.h"
 #include "usartWrapper.h"
 #include "systemStatus.h"
 #include "extiWrapper.h"
@@ -33,7 +34,7 @@ void BSP_init(void) {
 	initGPIO_LED();
 	initQueue();
 
-	initResult &= USART_tracerInit(pTraceUsart);
+	initResult &= USART1_InitTrace(pTraceUsart);
 	initResult &= CAN_init(pCan1Bus);
 
 	HELP_printMessage();

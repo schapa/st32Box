@@ -77,7 +77,7 @@ void simpleTest(void) {
 	trace_printf("summ [%x]\n\r", summ);
 
 	USART_HandleTypeDef usart;
-	USART_deviceInit(&usart, 9600);
+	USART2_Init(&usart, 9600);
 	HELP_dumpUsartProps(&usart);
 	while (1) {
 		HAL_StatusTypeDef status = HAL_USART_Transmit(&usart, s_testingSequence, 15, 0xFF);
