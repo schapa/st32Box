@@ -9,12 +9,16 @@
 #include "misc.h"
 
 static void dumpTargetProps(void);
-static uint32_t usartIdByHandle(USART_TypeDef *usart);
-static const char *usartStrGPIO(USART_TypeDef *usart);
+static uint32_t uxartIdByHandle(USART_TypeDef *usart);
+static const char *uxartStrGPIO(USART_TypeDef *usart);
 static const char *usartStrWordLength(uint32_t wordLength);
+static const char *uartStrWordLength(uint32_t wordLength);
 static const char *usartStrStopBits(uint32_t stopBits);
+static const char *uartStrStopBits(uint32_t stopBits);
 static const char *usartStrParity(uint32_t parity);
+static const char *uartStrParity(uint32_t parity);
 static const char *usartStrMode(uint32_t mode);
+static const char *uartStrMode(uint32_t mode);
 
 static const char *canStrGPIO(CAN_TypeDef *handle);
 static uint32_t canIdByHandle(CAN_TypeDef *can);
@@ -31,13 +35,25 @@ void HELP_printMessage(void) {
 
 void HELP_dumpUsartProps(USART_HandleTypeDef *traceUsart) {
 	if (traceUsart) {
-		trace_printf("USART_%d\n\r", usartIdByHandle(traceUsart->Instance));
-		trace_printf("\t        Pins: %s\n\r", usartStrGPIO(traceUsart->Instance));
+		trace_printf("USART_%d\n\r", uxartIdByHandle(traceUsart->Instance));
+		trace_printf("\t        Pins: %s\n\r", uxartStrGPIO(traceUsart->Instance));
 		trace_printf("\t   Baud rate: %d\n\r", traceUsart->Init.BaudRate);
 		trace_printf("\t Word length: %s\n\r", usartStrWordLength(traceUsart->Init.WordLength));
 		trace_printf("\t      Parity: %s\n\r", usartStrParity(traceUsart->Init.Parity));
 		trace_printf("\t   Stop bits: %s\n\r", usartStrStopBits(traceUsart->Init.StopBits));
 		trace_printf("\t        Mode: %s\n\r", usartStrMode(traceUsart->Init.Mode));
+	}
+}
+
+void HELP_dumpUartProps(UART_HandleTypeDef *uart) {
+	if (uart) {
+		trace_printf("UART_%d\n\r", uxartIdByHandle(uart->Instance));
+		trace_printf("\t        Pins: %s\n\r", uxartStrGPIO(uart->Instance));
+		trace_printf("\t   Baud rate: %d\n\r", uart->Init.BaudRate);
+		trace_printf("\t Word length: %s\n\r", uartStrWordLength(uart->Init.WordLength));
+		trace_printf("\t      Parity: %s\n\r", uartStrParity(uart->Init.Parity));
+		trace_printf("\t   Stop bits: %s\n\r", uartStrStopBits(uart->Init.StopBits));
+		trace_printf("\t        Mode: %s\n\r", uartStrMode(uart->Init.Mode));
 	}
 }
 
@@ -61,11 +77,11 @@ void HELP_dumpCANRxMsg(CanRxMsgTypeDef *msg) {
 }
 
 uint32_t HELP_getUsartIdByHandle(USART_HandleTypeDef *usart) {
-	return usart ? usartIdByHandle(usart->Instance) : 0;
+	return usart ? uxartIdByHandle(usart->Instance) : 0;
 }
 
 uint32_t HELP_getUartIdByHandle(UART_HandleTypeDef *uart) {
-	return uart ? usartIdByHandle(uart->Instance) : 0;
+	return uart ? uxartIdByHandle(uart->Instance) : 0;
 }
 
 uint32_t HELP_getCanIdByHandle(CAN_HandleTypeDef *canBus) {
@@ -84,7 +100,7 @@ static void dumpTargetProps(void) {
 	trace_printf("HalVersion: %p\n\r", HAL_GetHalVersion());
 }
 
-static uint32_t usartIdByHandle(USART_TypeDef *usart) {
+static uint32_t uxartIdByHandle(USART_TypeDef *usart) {
 	static const struct {
 		USART_TypeDef *handle;
 		uint32_t id;
@@ -130,7 +146,7 @@ static uint32_t canIdByHandle(CAN_TypeDef *can) {
 	return id;
 }
 
-static const char *usartStrGPIO(USART_TypeDef *usart) {
+static const char *uxartStrGPIO(USART_TypeDef *usart) {
 	static const struct {
 		USART_TypeDef *handle;
 		const char *str;
@@ -161,6 +177,14 @@ static const char *usartStrWordLength(uint32_t wordLength) {
 	return NULL;
 }
 
+static const char *uartStrWordLength(uint32_t wordLength) {
+	if (wordLength == UART_WORDLENGTH_8B)
+		return "8B";
+	if (wordLength == UART_WORDLENGTH_9B)
+		return "9B";
+	return NULL;
+}
+
 static const char *usartStrStopBits(uint32_t stopBits) {
 	if (stopBits == USART_STOPBITS_1)
 		return "1";
@@ -173,12 +197,29 @@ static const char *usartStrStopBits(uint32_t stopBits) {
 	return NULL;
 }
 
+static const char *uartStrStopBits(uint32_t stopBits) {
+	if (stopBits == UART_STOPBITS_1)
+		return "1";
+	if (stopBits == UART_STOPBITS_2)
+		return "2";
+	return NULL;
+}
+
 static const char *usartStrParity(uint32_t parity) {
 	if (parity == USART_PARITY_NONE)
 		return "NONE";
 	if (parity == USART_PARITY_EVEN)
 		return "EVEN";
 	if (parity == USART_PARITY_ODD)
+		return "ODD";
+	return NULL;
+}
+static const char *uartStrParity(uint32_t parity) {
+	if (parity == UART_PARITY_NONE)
+		return "NONE";
+	if (parity == UART_PARITY_EVEN)
+		return "EVEN";
+	if (parity == UART_PARITY_ODD)
 		return "ODD";
 	return NULL;
 }
@@ -189,6 +230,16 @@ static const char *usartStrMode(uint32_t mode) {
 	if (mode == USART_MODE_TX)
 		return "TX";
 	if (mode == USART_MODE_TX_RX)
+		return "RX_TX";
+	return NULL;
+}
+
+static const char *uartStrMode(uint32_t mode) {
+	if (mode == UART_MODE_RX)
+		return "RX";
+	if (mode == UART_MODE_TX)
+		return "TX";
+	if (mode == UART_MODE_TX_RX)
 		return "RX_TX";
 	return NULL;
 }

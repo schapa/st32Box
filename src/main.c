@@ -24,8 +24,8 @@ int main(int argc, char* argv[]) {
 
 	BSP_init();
 //simpleTest();
-extern void QueryTest(void);
-QueryTest();
+extern void QueryTest(uint8_t *buff, size_t size);
+QueryTest(NULL, 0);
 	while (true) {
 		Event_t event;
 		BSP_pendEvent(&event);
@@ -52,19 +52,12 @@ QueryTest();
 				break;
 			case EVENT_UxART_Buffer: {
 				uint8_t *buff = (uint8_t *)event.data.uxart.buffer;
-//				UART_HandleTypeDef *huart = event.data.uxart.hUart;
-//				size_t size = event.data.uxart.size;
-//				size_t i;
+				size_t size = event.data.uxart.size;
 				switch (event.subType.uxart) {
 					case ES_UxART_RX:
-						trace_printf("[rx] %s\n\r", buff);
-//						trace_printf("[UxART_Buffer] id [%d] state %p\n\r",
-//								HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart));
-//						trace_printf("\t %d [", size);
-//						for(i = 0; i < size; i++) {
-//							trace_printf(" %c", buff[i]);
-//						}
-//						trace_printf("]\r\n");
+//						trace_printf("[RX] [%s]\n\r", buff);
+						QueryTest(buff, size);
+						MEMMAN_free(buff);
 						break;
 					default:
 						break;

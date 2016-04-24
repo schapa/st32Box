@@ -37,6 +37,7 @@ typedef struct {
 	_Bool (*fail) (Request_p req);
 	StepState_t state;
 	uint32_t timeout;
+	const char *acknowledge; /* Success acknowledge string. if Null - "OK" */
 } Step_t, *Step_p;
 
 struct RequestNode {
@@ -45,9 +46,11 @@ struct RequestNode {
 	Step_p steps;
 	size_t stepsCount;
 	size_t stepCurrent;
-	const char *buffer;
-	const size_t bufferSize;
-	size_t bufferOccupied;
+	struct {
+		const char *buff;
+		size_t size;
+		size_t occupied;
+	} tx, rx;
 };
 
 void QueryProcess(Request_p req);

@@ -15,6 +15,7 @@
 
 static UART_HandleTypeDef *s_Uart4 = NULL;
 
+static void handleUsart4_RX(UART_HandleTypeDef *huart);
 static _Bool isTerminal(char symb);
 static size_t countValidChars(char *buffer, size_t size);
 
@@ -61,16 +62,17 @@ void UART_handleEvent(Event_p event) {
 			trace_printf("]\r\n");
 			break;
 		case ES_UxART_TX:
-			trace_printf("[UART_TX] id [%d] state %p\n\r",
-					HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart));
-			trace_printf("\t tx %d from %d\n\r", huart->TxXferCount, huart->TxXferSize);
+			trace_printf("[UART_TX] id [%d] state %p size %d\n\r",
+					HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart), huart->TxXferSize);
+			huart->pTxBuffPtr -= huart->TxXferSize;
+//			for(i = 0; i < huart->TxXferSize; i++) {
+//				trace_printf(" %c", huart->pTxBuffPtr[i]);
+//			}
 			huart->TxXferSize = 0;
 			break;
 		case ES_UxART_RXTX:
-			trace_printf("[UART_RXTX] id [%d] state %p\n\r",
-					HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart));
-			trace_printf("\t tx %d from %d\n\r", huart->TxXferCount, huart->TxXferSize);
-			trace_printf("\t rx %d from %d\n\r", huart->RxXferCount, huart->RxXferSize);
+			trace_printf("[UART_RXTX] id [%d] state %p RXxTX %dx%d\n\r",
+					HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart), huart->RxXferSize, huart->TxXferSize);
 			break;
 		case ES_UxART_ERROR:
 			trace_printf("[UART_ERROR] id [%d] state %p errno %p\n\r",
@@ -88,34 +90,7 @@ void UART4_IRQHandler(void) {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart == s_Uart4) {
-		static char buffer[BUFFER_SIZE];
-		static size_t currentPos;
-		_Bool send = false;
-		if (huart->RxXferSize) {
-			if (++currentPos < BUFFER_SIZE) {
-				if (isTerminal(buffer[currentPos-1])) {
-					if (currentPos == 1) {
-						currentPos = 0;
-					} else if (countValidChars(buffer, currentPos)) {
-						send = true;
-						currentPos--;
-					}
-				}
-			} else {
-				send = true;
-			}
-			if (send && currentPos) {
-				size_t size = currentPos * sizeof(char);
-				intptr_t newBuff = (intptr_t)MEMMAN_malloc(size);
-				memcpy((void*)newBuff, buffer, size);
-				Event_t event = { EVENT_UxART_Buffer, { ES_UxART_RX },
-					.data.uxart = { {huart}, newBuff, size }
-				};
-				BSP_queuePush(&event);
-				currentPos = 0;
-			}
-		}
-		HAL_UART_Receive_IT(huart, (uint8_t*)&buffer[currentPos], 1);
+		handleUsart4_RX(huart);
 	} else {
 		Event_t event = { EVENT_UART, { ES_UxART_RX },
 			.data.uxart.hUart = huart
@@ -144,6 +119,40 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 	__HAL_UART_CLEAR_FLAG(huart,HAL_UART_GetError(huart));
 	__HAL_UART_CLEAR_PEFLAG(huart);
 	BSP_queuePush(&event);
+}
+
+static void handleUsart4_RX(UART_HandleTypeDef *huart) {
+	static char buffer[BUFFER_SIZE];
+	static size_t currentPos;
+	_Bool send = false;
+	if (huart->RxXferSize) {
+		if (++currentPos < BUFFER_SIZE) {
+			if (isTerminal(buffer[currentPos-1])) {
+				if (currentPos == 1) {
+					currentPos = 0;
+				} else if (countValidChars(buffer, currentPos)) {
+					send = true;
+					currentPos--;
+				}
+			}
+		} else {
+			send = true;
+		}
+		if (send && currentPos) {
+			size_t size = currentPos * sizeof(char);
+			char* newBuff = (intptr_t)MEMMAN_malloc(size+1);
+			if (newBuff) {
+				memcpy((void*)newBuff, buffer, size);
+				newBuff[size] = 0;
+				Event_t event = { EVENT_UxART_Buffer, { ES_UxART_RX },
+					.data.uxart = { {huart}, newBuff, size }
+				};
+				BSP_queuePush(&event);
+			}
+			currentPos = 0;
+		}
+	}
+	HAL_UART_Receive_IT(huart, (uint8_t*)&buffer[currentPos], 1);
 }
 
 static _Bool isTerminal(char symb) {
