@@ -51,6 +51,7 @@ struct RequestNode {
 		size_t size;
 		size_t occupied;
 	} tx, rx;
+
 };
 
 void QueryProcess(Request_p req);

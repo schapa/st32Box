@@ -55,7 +55,7 @@ QueryTest(NULL, 0);
 				size_t size = event.data.uxart.size;
 				switch (event.subType.uxart) {
 					case ES_UxART_RX:
-//						trace_printf("[RX] [%s]\n\r", buff);
+						trace_printf("[RX] [%s]\n\r", buff);
 						QueryTest(buff, size);
 						MEMMAN_free(buff);
 						break;

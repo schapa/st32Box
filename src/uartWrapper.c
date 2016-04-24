@@ -10,14 +10,18 @@
 #include "bsp.h"
 #include "memman.h"
 #include "misc.h"
+#include "systemStatus.h"
 
 #define BUFFER_SIZE 128
+#define FLUSH_TIMEOUT (4*1000u) /* 4 seconds */
 
 static UART_HandleTypeDef *s_Uart4 = NULL;
+static uint32_t s_uart4BufferFlushTimer = INVALID_HANDLE;
 
 static void handleUsart4_RX(UART_HandleTypeDef *huart);
 static _Bool isTerminal(char symb);
 static size_t countValidChars(char *buffer, size_t size);
+static void onBufferFlush(void *data);
 
 HAL_StatusTypeDef UART4_Init(UART_HandleTypeDef *handle, uint32_t baudRate) {
 
@@ -42,6 +46,7 @@ HAL_StatusTypeDef UART4_Init(UART_HandleTypeDef *handle, uint32_t baudRate) {
 		HAL_NVIC_EnableIRQ(UART4_IRQn);
 /* simulate acceptance */
 		HAL_UART_RxCpltCallback(handle);
+		s_uart4BufferFlushTimer = SystemTimer_newArmed(FLUSH_TIMEOUT, true, onBufferFlush, handle);
 	}
 	return result;
 }
@@ -140,8 +145,9 @@ static void handleUsart4_RX(UART_HandleTypeDef *huart) {
 		}
 		if (send && currentPos) {
 			size_t size = currentPos * sizeof(char);
-			char* newBuff = (intptr_t)MEMMAN_malloc(size+1);
+			char* newBuff = (char*)MEMMAN_malloc(size+1);
 			if (newBuff) {
+				SystemTimer_rearm(s_uart4BufferFlushTimer);
 				memcpy((void*)newBuff, buffer, size);
 				newBuff[size] = 0;
 				Event_t event = { EVENT_UxART_Buffer, { ES_UxART_RX },
@@ -170,4 +176,14 @@ static size_t countValidChars(char *buffer, size_t size) {
 		}
 	}
 	return sumbs;
+}
+
+static void onBufferFlush(void *data) {
+	UART_HandleTypeDef *handle = (UART_HandleTypeDef *)data;
+	trace_printf("[onBufferFlush]\n\r");
+	if (handle) {
+		*handle->pRxBuffPtr = '\n';
+		handle->RxXferCount = 0;
+		HAL_UART_RxCpltCallback(handle);
+	}
 }

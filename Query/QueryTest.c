@@ -68,10 +68,42 @@ static _Bool getMyAdressOk (Request_p req) {
 	return true;
 }
 
-
 static _Bool setMultipleMode (Request_p req) {
 	char *buff = (char*)req->tx.buff;
 	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPMUX=1"CRLF);
+	return true;
+}
+
+static _Bool openUPnPDiscoverConnection (Request_p req) {
+	char *buff = (char*)req->tx.buff;
+	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPSTART=0,\"UDP\",\"239.255.255.250\",1900"CRLF);
+	return true;
+}
+
+//static const char *upnpDiscoverer =
+//"M-SEARCH * HTTP/1.1\n\r"
+//"HOST: 239.255.255.250:1900\n\r"
+//"ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\n\r"
+//"MAN: \"ssdp:discover\"\n\r"
+//"MX: 2\n\r\n\r"
+//;
+static const char *upnpDiscoverer =
+"M-SEARCH * HTTP/1.1\n\r"
+"HOST: 239.255.255.250:1900\n\r"
+"ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\n\r"
+"MAN: \"ssdp:discover\"\n\r"
+"MX: 2\n\r\n\r"
+;
+
+static _Bool prepareToSend (Request_p req) {
+	char *buff = (char*)req->tx.buff;
+	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPSEND=0,%d"CRLF, 10/*strlen(upnpDiscoverer)*/);
+	return true;
+}
+
+static _Bool sendUPnPDiscover (Request_p req) {
+	char *buff = (char*)req->tx.buff;
+	req->tx.occupied = snprintf(buff, req->tx.size, "%s"CRLF, upnpDiscoverer);
 	return true;
 }
 
@@ -84,6 +116,9 @@ static Step_t steps[] = {
 		{ startConnect, NULL, NULL, STEP_INIT, 0, NULL },
 		{ getMyAdress, getMyAdressOk, NULL, STEP_INIT, 0, NULL },
 		{ setMultipleMode, NULL, NULL, STEP_INIT, 0, NULL },
+		{ openUPnPDiscoverConnection, NULL, NULL, STEP_INIT, 0, NULL },
+		{ prepareToSend, NULL, NULL, STEP_INIT, 0, "> " },
+		{ sendUPnPDiscover, NULL, NULL, STEP_INIT, 0, NULL },
 };
 
 static char queryBuffer[1024];
