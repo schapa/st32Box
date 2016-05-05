@@ -18,7 +18,7 @@
 static UART_HandleTypeDef *s_Uart4 = NULL;
 static uint32_t s_uart4BufferFlushTimer = INVALID_HANDLE;
 
-static void handleUsart4_RX(UART_HandleTypeDef *huart);
+static void handleUart4_RX(UART_HandleTypeDef *huart);
 static _Bool isTerminal(char symb);
 static size_t countValidChars(char *buffer, size_t size);
 static void onBufferFlush(void *data);
@@ -95,7 +95,7 @@ void UART4_IRQHandler(void) {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart == s_Uart4) {
-		handleUsart4_RX(huart);
+		handleUart4_RX(huart);
 	} else {
 		Event_t event = { EVENT_UART, { ES_UxART_RX },
 			.data.uxart.hUart = huart
@@ -121,12 +121,14 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 			.data.uxart.buffer = HAL_UART_GetState(huart),
 			.data.uxart.size = HAL_UART_GetError(huart),
 	};
-	__HAL_UART_CLEAR_FLAG(huart,HAL_UART_GetError(huart));
 	__HAL_UART_CLEAR_PEFLAG(huart);
 	BSP_queuePush(&event);
+	if (huart == s_Uart4) {
+		handleUart4_RX(huart);
+	}
 }
 
-static void handleUsart4_RX(UART_HandleTypeDef *huart) {
+static void handleUart4_RX(UART_HandleTypeDef *huart) {
 	static char buffer[BUFFER_SIZE];
 	static size_t currentPos;
 	_Bool send = false;
@@ -180,10 +182,16 @@ static size_t countValidChars(char *buffer, size_t size) {
 
 static void onBufferFlush(void *data) {
 	UART_HandleTypeDef *handle = (UART_HandleTypeDef *)data;
-	trace_printf("[onBufferFlush]\n\r");
-	if (handle) {
+	if (handle && (handle->State == HAL_UART_STATE_BUSY_RX
+			|| handle->State == HAL_UART_STATE_BUSY_TX_RX)) {
+		trace_printf("[onBufferFlush]\n\r");
 		*handle->pRxBuffPtr = '\n';
 		handle->RxXferCount = 0;
+		if (handle->State == HAL_UART_STATE_BUSY_RX) {
+			handle->State = HAL_UART_STATE_READY;
+		} else {
+			handle->State = HAL_UART_STATE_BUSY_TX;
+		}
 		HAL_UART_RxCpltCallback(handle);
 	}
 }

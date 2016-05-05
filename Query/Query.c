@@ -19,17 +19,13 @@ void QueryProcess(Request_p req) {
 	do {
 		if (!req || !req->steps || !req->tx.buff)
 			break;
-		if (req->stepCurrent >= req->stepsCount) {
-			req->state = QUERY_DONE;
-			break;
-		}
 		while (makeStep(req) && req->state == QUERY_PROCESSING);
 		switch (req->state) {
 			case QUERY_WAITING:
 				trace_printf("[Query] Waiting on step: %u\n\r", req->stepCurrent);
 				break;
 			case QUERY_DONE:
-				trace_printf("[Query] done\n\r");
+				trace_printf("[Query] Done!\n\r");
 				break;
 			case QUERY_FAILED:
 				trace_printf("[Query] failed! on step %u]\n\r", req->stepCurrent);
