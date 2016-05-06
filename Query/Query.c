@@ -13,7 +13,7 @@
 #include "memman.h"
 #include "dbg_base.h"
 
-#if 0
+#if 01
 #include "dbg_trace.h"
 #endif
 

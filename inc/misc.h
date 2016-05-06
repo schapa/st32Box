@@ -13,6 +13,7 @@
 void HELP_printMessage(void);
 void HELP_dumpUsartProps(USART_HandleTypeDef *usart);
 void HELP_dumpUartProps(UART_HandleTypeDef *uart);
+void HELP_dumpUartError(uint32_t err);
 void HELP_dumpCANProps(CAN_HandleTypeDef *canBus);
 void HELP_dumpCANRxMsg(CanRxMsgTypeDef *msg);
 

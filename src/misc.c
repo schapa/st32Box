@@ -62,6 +62,21 @@ void HELP_dumpUartProps(UART_HandleTypeDef *uart) {
 	}
 }
 
+void HELP_dumpUartError(uint32_t err) {
+	if (err & HAL_UART_ERROR_PE) {
+		DBGMSG_H("Parity error");
+	}
+	if (err & HAL_UART_ERROR_NE) {
+		DBGMSG_H("Noise error");
+	}
+	if (err & HAL_UART_ERROR_FE) {
+		DBGMSG_H("Frame error");
+	}
+	if (err & HAL_UART_ERROR_ORE) {
+		DBGMSG_H("Overrun error");
+	}
+}
+
 void HELP_dumpCANProps(CAN_HandleTypeDef *canBus) {
 	if (canBus) {
 		DBGMSG_H("CAN_%d", canIdByHandle(canBus->Instance));

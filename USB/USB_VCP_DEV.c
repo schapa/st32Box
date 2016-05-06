@@ -51,7 +51,7 @@ USBD_CDC_ItfTypeDef SHPA_CDC_FOPS = {
 static int8_t Init(USBD_HandleTypeDef *pDevice) {
 	DBG_ENTRY;
 	USBD_CDC_ItfTypeDef *pDevControl = (USBD_CDC_ItfTypeDef*)pDevice->pUserData;
-	DBGMSG_L("handle %p", pDevControl);
+	DBGMSG_M("handle %p", pDevControl);
 	pDevControl->property = s_vcpDefaultSettings;
 	USBD_CDC_SetTxBuffer(pDevice, s_txBuffer, 0);
 	USBD_CDC_SetRxBuffer(pDevice, s_rxBuffer);
@@ -63,7 +63,7 @@ static int8_t Init(USBD_HandleTypeDef *pDevice) {
 static int8_t DeInit(USBD_HandleTypeDef *pDevice) {
 	DBG_ENTRY;
 	(void)pDevice;
-	DBGMSG_L("handle %p", pDevice);
+	DBGMSG_M("handle %p", pDevice);
 	DBG_EXIT;
 	return USBD_OK;
 }
@@ -73,33 +73,33 @@ static int8_t Control(USBD_HandleTypeDef *pDevice, uint8_t cmd, uint8_t *buff, u
 	USBD_CDC_ItfTypeDef *pDevControl = (USBD_CDC_ItfTypeDef*)pDevice->pUserData;
 	switch (cmd) {
 		case CDC_SEND_ENCAPSULATED_COMMAND:
-			DBGMSG_L("ENCAPSULATED_COMMAND len %d", len);
+			DBGMSG_M("ENCAPSULATED_COMMAND len %d", len);
 			break;
 		case CDC_GET_ENCAPSULATED_RESPONSE:
-			DBGMSG_L("ENCAPSULATED_RESPONSE len %d", len);
+			DBGMSG_M("ENCAPSULATED_RESPONSE len %d", len);
 			break;
 		case CDC_SET_COMM_FEATURE:
-			DBGMSG_L("SET_COMM_FEATURE len %d", len);
+			DBGMSG_M("SET_COMM_FEATURE len %d", len);
 			break;
 		case CDC_GET_COMM_FEATURE:
-			DBGMSG_L("GET_COMM_FEATURE len %d", len);
+			DBGMSG_M("GET_COMM_FEATURE len %d", len);
 			break;
 		case CDC_CLEAR_COMM_FEATURE:
-			DBGMSG_L("CLEAR_COMM_FEATURE len %d", len);
+			DBGMSG_M("CLEAR_COMM_FEATURE len %d", len);
 			break;
 		case CDC_SET_LINE_CODING:
-			DBGMSG_L("SET_LINE_CODING len %d", len);
+			DBGMSG_M("SET_LINE_CODING len %d", len);
 			pDevControl->property.bitrate    = (uint32_t)((buff[0] | (buff[1] << 8) | (buff[2] << 16) | (buff[3] << 24)));
 			pDevControl->property.format     = buff[4];
 			pDevControl->property.paritytype = buff[5];
 			pDevControl->property.datatype   = buff[6];
-			DBGMSG_L("bitrate %d", pDevControl->property.bitrate);
-			DBGMSG_L("format %d", pDevControl->property.format);
-			DBGMSG_L("paritytype %d", pDevControl->property.paritytype);
-			DBGMSG_L("datatype %d", pDevControl->property.datatype);
+			DBGMSG_M("bitrate %d", pDevControl->property.bitrate);
+			DBGMSG_M("format %d", pDevControl->property.format);
+			DBGMSG_M("paritytype %d", pDevControl->property.paritytype);
+			DBGMSG_M("datatype %d", pDevControl->property.datatype);
 			break;
 		case CDC_GET_LINE_CODING:
-			DBGMSG_L("CDC_GET_LINE_CODING len %d", len);
+			DBGMSG_M("CDC_GET_LINE_CODING len %d", len);
 			buff[0] = (uint8_t)(pDevControl->property.bitrate);
 			buff[1] = (uint8_t)(pDevControl->property.bitrate >> 8);
 			buff[2] = (uint8_t)(pDevControl->property.bitrate >> 16);
@@ -109,10 +109,10 @@ static int8_t Control(USBD_HandleTypeDef *pDevice, uint8_t cmd, uint8_t *buff, u
 			buff[6] = pDevControl->property.datatype;
 			break;
 		case CDC_SET_CONTROL_LINE_STATE:
-			DBGMSG_L("SET_CONTROL_LINE_STATE len %d", len);
+			DBGMSG_M("SET_CONTROL_LINE_STATE len %d", len);
 			break;
 		case CDC_SEND_BREAK:
-			DBGMSG_L("SEND_BREAK len %d", len);
+			DBGMSG_M("SEND_BREAK len %d", len);
 			break;
 		default:
 			DBGMSG_WARN("cdm %d, len %d", cmd, len);
@@ -125,9 +125,10 @@ static int8_t Control(USBD_HandleTypeDef *pDevice, uint8_t cmd, uint8_t *buff, u
 static int8_t Receive(USBD_HandleTypeDef *pDevice, uint8_t *buff, uint32_t *len) {
 	DBG_ENTRY;
 	(void)pDevice;
-	uint32_t i = 0;
-	DBGMSG_L("Count %d", *len);
-	DBGMSG_L("[%s]", buff);
+
+	DBGMSG_M("Count %d", *len);
+	buff[*len] = '\0';
+	DBGMSG_M("[%s]", buff);
 
 	/* echo */
     USBD_CDC_SetTxBuffer(pDevice, buff, *len);

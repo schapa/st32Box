@@ -61,16 +61,22 @@ void BSP_init(void) {
 }
 
 void BSP_queuePush(Event_p pEvent) {
+	uint32_t primask = __get_PRIMASK();
 	__disable_irq();
 	s_eventQueue = Queue_pushEvent(s_eventQueue, pEvent);
-	__enable_irq();
+	if (!primask) {
+		__enable_irq();
+	}
 }
 
 void BSP_pendEvent(Event_p pEvent) {
 	while (!s_eventQueue);
+	uint32_t primask = __get_PRIMASK();
 	__disable_irq();
 	s_eventQueue = Queue_getEvent(s_eventQueue, pEvent);
-	__enable_irq();
+	if (!primask) {
+		__enable_irq();
+	}
 }
 
 _Bool BSP_queueIsEventPending(Event_p pEvent) {

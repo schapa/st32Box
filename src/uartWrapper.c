@@ -11,6 +11,7 @@
 #include "memman.h"
 #include "misc.h"
 #include "systemStatus.h"
+#include "timers.h"
 #include "dbg_base.h"
 
 #if 0
@@ -18,7 +19,7 @@
 #endif
 
 #define BUFFER_SIZE 128
-#define FLUSH_TIMEOUT (4*1000u) /* 4 seconds */
+#define FLUSH_TIMEOUT 4//(4*1000u) /* 4 seconds */
 
 static UART_HandleTypeDef *s_Uart4 = NULL;
 static uint32_t s_uart4BufferFlushTimer = INVALID_HANDLE;
@@ -51,7 +52,7 @@ HAL_StatusTypeDef UART4_Init(UART_HandleTypeDef *handle, uint32_t baudRate) {
 		HAL_NVIC_EnableIRQ(UART4_IRQn);
 /* simulate acceptance */
 		HAL_UART_RxCpltCallback(handle);
-		s_uart4BufferFlushTimer = SystemTimer_newArmed(FLUSH_TIMEOUT, true, onBufferFlush, handle);
+		s_uart4BufferFlushTimer = Timer_newArmed(FLUSH_TIMEOUT, true, onBufferFlush, handle);
 	}
 	return result;
 }
@@ -82,6 +83,7 @@ void UART_handleEvent(Event_p event) {
 		case ES_UxART_ERROR:
 			DBGMSG_ERR("id [%d] state %p errno %p",
 					HELP_getUartIdByHandle(huart), event->data.uxart.buffer, event->data.uxart.size);
+			HELP_dumpUartError(event->data.uxart.size);
 			if (huart == s_Uart4)
 				HAL_UART_RxCpltCallback(huart);
 			break;
@@ -147,9 +149,9 @@ static void handleUart4_RX(UART_HandleTypeDef *huart) {
 		}
 		if (send && currentPos) {
 			size_t size = currentPos * sizeof(char);
-			intptr_t *newBuff = MEMMAN_malloc(size+1);
+			char *newBuff = MEMMAN_malloc(size+1);
 			if (newBuff) {
-				SystemTimer_rearm(s_uart4BufferFlushTimer);
+				Timer_rearm(s_uart4BufferFlushTimer);
 				memcpy((void*)newBuff, buffer, size);
 				newBuff[size] = 0;
 				Event_t event = { EVENT_UxART_Buffer, { ES_UxART_RX },
@@ -183,9 +185,9 @@ static size_t countValidChars(char *buffer, size_t size) {
 }
 
 static void onBufferFlush(void *data) {
+	DBG_ENTRY;
 	UART_HandleTypeDef *handle = (UART_HandleTypeDef *)data;
 	if (handle && handle->RxXferCount) {
-		DBGMSG_M("[Flush] %p\n\r", handle);
 		*handle->pRxBuffPtr = '\n';
 		handle->RxXferCount = 0;
 		if (handle->State == HAL_UART_STATE_BUSY_RX) {
@@ -193,7 +195,8 @@ static void onBufferFlush(void *data) {
 		} else if (handle->State == HAL_UART_STATE_BUSY_TX_RX) {
 			handle->State = HAL_UART_STATE_BUSY_TX;
 		}
-		SystemTimer_disarm(s_uart4BufferFlushTimer);
+		Timer_disarm(s_uart4BufferFlushTimer);
 		HAL_UART_RxCpltCallback(handle);
 	}
+	DBG_EXIT;
 }

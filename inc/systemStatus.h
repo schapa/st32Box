@@ -12,8 +12,6 @@
 #include <stdbool.h>
 #include "stm32f4xx.h"
 
-#define INVALID_HANDLE (0)
-
 typedef enum {
 	INFORM_INIT,
 	INFORM_PREHEAT,
@@ -26,8 +24,6 @@ typedef enum {
 
 typedef void (*ledOutputControl_t)(FunctionalState);
 
-typedef void (*onTimerFire_t)(void *);
-
 void SystemStatus_setLedControl(ledOutputControl_t);
 void SystemStatus_set(systemStatus_t);
 
@@ -35,10 +31,6 @@ uint32_t System_getUptime(void);
 uint32_t System_getUptimeMs(void);
 
 void SystemTimer_delayMsDummy(uint32_t delay);
-uint32_t SystemTimer_newArmed(uint32_t tout, _Bool isPeriodic, onTimerFire_t cb, void *cbData);
-void SystemTimer_delete(uint32_t id);
-void SystemTimer_rearm(uint32_t id);
-void SystemTimer_disarm(uint32_t id);
 
 
 #endif /* SYSTEMSTATUS_H_ */

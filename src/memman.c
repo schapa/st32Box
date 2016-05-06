@@ -16,9 +16,12 @@
 
 void *MEMMAN_malloc(size_t size) {
 	DBG_ENTRY;
+	uint32_t primask = __get_PRIMASK();
 	__disable_irq();
 	void *ptr = malloc(size);
-	__enable_irq();
+	if (!primask) {
+		__enable_irq();
+	}
 	DBGMSG_M("Alloc %p", ptr);
 	DBG_EXIT;
 	return ptr;
@@ -27,9 +30,12 @@ void *MEMMAN_malloc(size_t size) {
 
 void MEMMAN_free(void *ptr) {
 	DBG_ENTRY;
+	uint32_t primask = __get_PRIMASK();
 	__disable_irq();
 	free (ptr);
-	__enable_irq();
+	if (!primask) {
+		__enable_irq();
+	}
 	DBGMSG_M("Free %p", ptr);
 	DBG_EXIT;
 }

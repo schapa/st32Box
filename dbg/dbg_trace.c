@@ -21,7 +21,7 @@ void dbgmsg(char *clr, char *siv, const char *file, const char *func, int line, 
 	timestamp();
 	trace_printf("%s::%s (%d)", file, func, line);
 	trace_printf("%s", clr);
-	trace_printf("%s: ", siv);
+	trace_printf(" %s: ", siv);
 	va_list ap;
 	va_start (ap, fmt);
 
