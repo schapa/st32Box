@@ -16,9 +16,14 @@
 #include "uartWrapper.h"
 #include "canWrapper.h"
 #include "misc.h"
+#include "dbg_base.h"
+
+#if 0
+#include "dbg_trace.h"
+#endif
 
 int main(int argc, char* argv[]) {
-
+	DBG_ENTRY;
 	(void)argc;
 	(void)argv;
 
@@ -31,7 +36,7 @@ QueryTest(NULL, 0);
 		BSP_pendEvent(&event);
 		switch (event.type) {
 			case EVENT_EXTI: {
-				trace_printf("[Exti] pin %d act %d\n\r", event.data, event.subType.exti);
+				DBGMSG_L("[Exti] pin %d act %d", event.data, event.subType.exti);
 				char *text = "hello !";
 				CanTxMsgTypeDef txMsg = {
 						0x22, 0,
@@ -43,10 +48,6 @@ QueryTest(NULL, 0);
 				USB_ACM_write((uint8_t*)text, strlen(text));
 				CAN_write(&txMsg);
 				} break;
-			case EVENT_SYSTICK:
-//				if (event.subType.systick == ES_SYSTICK_SECOND_ELAPSED)
-//					trace_printf("[SYSTICK_SECOND_ELAPSED] %d\n\r", event.data.intptr);
-				break;
 			case EVENT_UART:
 				UART_handleEvent(&event);
 				break;
@@ -55,7 +56,7 @@ QueryTest(NULL, 0);
 				size_t size = event.data.uxart.size;
 				switch (event.subType.uxart) {
 					case ES_UxART_RX:
-						trace_printf("[RX] [%s]\n\r", buff);
+						DBGMSG_H("[RX] [%s]", buff);
 						QueryTest(buff, size);
 						MEMMAN_free(buff);
 						break;
@@ -66,13 +67,14 @@ QueryTest(NULL, 0);
 			case EVENT_CAN:
 				CAN_handleEvent(&event);
 				break;
+			case EVENT_SYSTICK:
 			case EVENT_DUMMY:
 				break;
 			default:
-				trace_printf("Unhandled Event type %p data %p!\n\r", event.type, event.data);
+				DBGMSG_WARN("Unhandled Event type %p data %p!", event.type, event.data);
 				break;
 		}
 	}
-
+	DBG_EXIT;
 	return 0;
 }

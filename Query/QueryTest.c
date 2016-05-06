@@ -9,10 +9,14 @@
 #include "stm32f4xx_hal.h"
 
 #include "bsp.h"
-#include "misc.h"
 #include "uartWrapper.h"
 #include "memman.h"
 #include <string.h>
+#include "dbg_base.h"
+
+#if 0
+#include "dbg_trace.h"
+#endif
 
 #define CRLF "\r\n"
 
@@ -48,7 +52,7 @@ static _Bool listAccessPoints (Request_p req) {
 	return true;
 }
 static _Bool listAccessPointsOk (Request_p req) {
-	trace_printf("[APS]\n\r%s\n\r", req->rx.buff);
+	DBGMSG_M("[APS]\n\r%s", req->rx.buff);
 	return true;
 }
 
@@ -64,7 +68,7 @@ static _Bool getMyAdress (Request_p req) {
 	return true;
 }
 static _Bool getMyAdressOk (Request_p req) {
-	trace_printf("[IP]\n\r%s\n\r", req->rx.buff);
+	DBGMSG_M("[IP]\n\r%s", req->rx.buff);
 	return true;
 }
 
@@ -88,13 +92,6 @@ char *upnpDiscoverer = "M-SEARCH * HTTP/1.1\r\nHOST:239.255.255.250:1900\r\nMAN:
 //"MAN: \"ssdp:discover\"\n\r"
 //"MX: 2\n\r\n\r"
 //;
-//static const char *upnpDiscoverer =
-//"M-SEARCH * HTTP/1.1\n\r"   // 20
-//"HOST: 239.255.255.250:1900\n\r" //26
-//"ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\n\r"
-//"MAN: \"ssdp:discover\"\n\r"
-//"MX: 2\n\r\n\r"
-//;
 
 static _Bool prepareToSend (Request_p req) {
 	char *buff = (char*)req->tx.buff;
@@ -108,7 +105,7 @@ static _Bool sendUPnPDiscover (Request_p req) {
 	return true;
 }
 static _Bool uPnPDiscoverAck (Request_p req) {
-	trace_printf("[UPnP]\n\r%s\n\r", req->rx.buff);
+	DBGMSG_M("[UPnP]\n\r%s", req->rx.buff);
 	return true;
 }
 
@@ -160,7 +157,6 @@ void QueryTest(uint8_t *buff, size_t size) {
 			testReq.rx.buff = start;
 			testReq.rx.occupied += size;
 			start[testReq.rx.occupied] = '\0';
-//			trace_printf("[QRX]\n\r%s\n\r", testReq.rx.buff);
 		}
 		QueryProcess(&testReq);
 		HAL_UART_Transmit_IT(&s_uart, (uint8_t*)testReq.tx.buff, testReq.tx.occupied);

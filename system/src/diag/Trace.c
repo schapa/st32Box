@@ -13,7 +13,7 @@
 #include "string.h"
 
 #ifndef OS_INTEGER_TRACE_PRINTF_TMP_ARRAY_SIZE
-#define OS_INTEGER_TRACE_PRINTF_TMP_ARRAY_SIZE (2048)
+#define OS_INTEGER_TRACE_PRINTF_TMP_ARRAY_SIZE (128)
 #endif
 
 // ----------------------------------------------------------------------------

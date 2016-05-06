@@ -11,6 +11,11 @@
 #include "memman.h"
 #include "misc.h"
 #include "systemStatus.h"
+#include "dbg_base.h"
+
+#if 0
+#include "dbg_trace.h"
+#endif
 
 #define BUFFER_SIZE 128
 #define FLUSH_TIMEOUT (4*1000u) /* 4 seconds */
@@ -58,29 +63,24 @@ void UART_handleEvent(Event_p event) {
 	int i;
 	switch (event->subType.uxart) {
 		case ES_UxART_RX:
-			trace_printf("[UART_RX] id [%d] state %p\n\r",
-					HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart));
-			trace_printf("\t %d [", huart->RxXferSize);
+			DBGMSG_M("[RX] id [%d] state %p, %d",
+					HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart), huart->RxXferSize);
 			for(i = 0; i < huart->RxXferSize; i++) {
-				trace_printf(" %c", huart->pRxBuffPtr[i]);
+				DBGMSG_L(" %c", huart->pRxBuffPtr[i]);
 			}
-			trace_printf("]\r\n");
 			break;
 		case ES_UxART_TX:
-			trace_printf("[UART_TX] id [%d] state %p size %d\n\r",
+			DBGMSG_M("[TX] id [%d] state %p size %d",
 					HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart), huart->TxXferSize);
 			huart->pTxBuffPtr -= huart->TxXferSize;
-//			for(i = 0; i < huart->TxXferSize; i++) {
-//				trace_printf(" %c", huart->pTxBuffPtr[i]);
-//			}
 			huart->TxXferSize = 0;
 			break;
 		case ES_UxART_RXTX:
-			trace_printf("[UART_RXTX] id [%d] state %p RXxTX %dx%d\n\r",
+			DBGMSG_M("[RXTX] id [%d] state %p RXxTX %dx%d",
 					HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart), huart->RxXferSize, huart->TxXferSize);
 			break;
 		case ES_UxART_ERROR:
-			trace_printf("[UART_ERROR] id [%d] state %p errno %p\n\r",
+			DBGMSG_ERR("id [%d] state %p errno %p",
 					HELP_getUartIdByHandle(huart), event->data.uxart.buffer, event->data.uxart.size);
 			if (huart == s_Uart4)
 				HAL_UART_RxCpltCallback(huart);
@@ -147,13 +147,15 @@ static void handleUart4_RX(UART_HandleTypeDef *huart) {
 		}
 		if (send && currentPos) {
 			size_t size = currentPos * sizeof(char);
-			char* newBuff = (char*)MEMMAN_malloc(size+1);
+			intptr_t *newBuff = MEMMAN_malloc(size+1);
 			if (newBuff) {
 				SystemTimer_rearm(s_uart4BufferFlushTimer);
 				memcpy((void*)newBuff, buffer, size);
 				newBuff[size] = 0;
 				Event_t event = { EVENT_UxART_Buffer, { ES_UxART_RX },
-					.data.uxart = { {huart}, newBuff, size }
+					.data.uxart.hUart = huart,
+					.data.uxart.buffer = (intptr_t)newBuff,
+					.data.uxart.size = size
 				};
 				BSP_queuePush(&event);
 			}
@@ -182,16 +184,16 @@ static size_t countValidChars(char *buffer, size_t size) {
 
 static void onBufferFlush(void *data) {
 	UART_HandleTypeDef *handle = (UART_HandleTypeDef *)data;
-	if (handle && (handle->State == HAL_UART_STATE_BUSY_RX
-			|| handle->State == HAL_UART_STATE_BUSY_TX_RX)) {
-		trace_printf("[onBufferFlush]\n\r");
+	if (handle && handle->RxXferCount) {
+		DBGMSG_M("[Flush] %p\n\r", handle);
 		*handle->pRxBuffPtr = '\n';
 		handle->RxXferCount = 0;
 		if (handle->State == HAL_UART_STATE_BUSY_RX) {
 			handle->State = HAL_UART_STATE_READY;
-		} else {
+		} else if (handle->State == HAL_UART_STATE_BUSY_TX_RX) {
 			handle->State = HAL_UART_STATE_BUSY_TX;
 		}
+		SystemTimer_disarm(s_uart4BufferFlushTimer);
 		HAL_UART_RxCpltCallback(handle);
 	}
 }

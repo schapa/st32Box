@@ -10,33 +10,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "misc.h"
+#include "memman.h"
+#include "dbg_base.h"
+
+#if 0
+#include "dbg_trace.h"
+#endif
 
 static _Bool makeStep(Request_p req);
 static _Bool isStepAck(Request_p req, _Bool *isOk);
 
 void QueryProcess(Request_p req) {
+	DBG_ENTRY;
 	do {
 		if (!req || !req->steps || !req->tx.buff)
 			break;
 		while (makeStep(req) && req->state == QUERY_PROCESSING);
 		switch (req->state) {
 			case QUERY_WAITING:
-				trace_printf("[Query] Waiting on step: %u\n\r", req->stepCurrent);
+				DBGMSG_M("Waiting on step: %u", req->stepCurrent);
 				break;
 			case QUERY_DONE:
-				trace_printf("[Query] Done!\n\r");
+				DBGMSG_H("Done!");
 				break;
 			case QUERY_FAILED:
-				trace_printf("[Query] failed! on step %u]\n\r", req->stepCurrent);
+				DBGMSG_ERR("failed! on step %u]", req->stepCurrent);
 				break;
 			default:
 				break;
 		}
 	} while (0);
+	DBG_EXIT;
 }
 
 static _Bool makeStep(Request_p req) {
+	DBG_ENTRY;
 	_Bool continueStepping = false;
 	Step_p step = NULL;
 	_Bool isOk = false;
@@ -55,7 +63,7 @@ static _Bool makeStep(Request_p req) {
 				if (step->start) {
 					continueStepping = step->start(req);
 					req->state = QUERY_WAITING;
-					trace_printf("[Query] Starting: %u %s", req->stepCurrent, req->tx.buff);
+					DBGMSG_M("Starting: %u %s", req->stepCurrent, req->tx.buff);
 				}
 				break;
 			case STEP_WAITING:
@@ -63,16 +71,17 @@ static _Bool makeStep(Request_p req) {
 				if (isStepAck(req, &isOk)) {
 					continueStepping = true;
 					if (step->success) {
-						trace_printf("[Query] Successed: %u <%s>\n\r", req->stepCurrent, req->tx.buff);
+						DBGMSG_H("Successed: %u <%s>", req->stepCurrent, req->tx.buff);
 						if (!step->success(req))
 							req->state = QUERY_FAILED;
 					}
-					trace_printf("[Query] Free RX BUFF \n\r");
-					MEMMAN_free(req->rx.buff);
+					DBGMSG_L("Free RX BUFF");
+					MEMMAN_free((void*)req->rx.buff);
 				} else
 					continueStepping = false;
 				break;
 			case STEP_FAILED:
+				DBGMSG_H("Failed: %u", req->stepCurrent);
 				if (step->fail && step->fail(req)) {
 					step->state = STEP_WAITING;
 				} else {
@@ -89,7 +98,8 @@ static _Bool makeStep(Request_p req) {
 			req->stepCurrent++;
 		}
 	} while (0);
-
+	DBGMSG_M("%s", continueStepping ? "Yes" : "No");
+	DBG_EXIT;
 	return continueStepping;
 }
 
@@ -104,14 +114,14 @@ static _Bool isStepAck(Request_p req, _Bool *isOk) {
 		const size_t ackOkSize = strlen(ackOk);
 		*isOk = false;
 		if (req->rx.occupied >= ackErrorSize) {
-			char *ptr = &req->rx.buff[req->rx.occupied - ackErrorSize];
+			char *ptr = (char*)&req->rx.buff[req->rx.occupied - ackErrorSize];
 			if (!strcmp(ptr, ackError)) {
 				result = true;
 				break;
 			}
 		}
 		if (req->rx.occupied >= ackOkSize) {
-			char *ptr = &req->rx.buff[req->rx.occupied - ackOkSize];
+			char *ptr = (char*)&req->rx.buff[req->rx.occupied - ackOkSize];
 			if (!strcmp(ptr, ackOk)) {
 				*isOk = true;
 				result = true;
@@ -120,6 +130,7 @@ static _Bool isStepAck(Request_p req, _Bool *isOk) {
 		}
 
 	} while (0);
+	DBGMSG_M("%s", result ? "Yes" : "No");
 	return result;
 }
 

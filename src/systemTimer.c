@@ -18,6 +18,7 @@ typedef struct timerNode {
 	uint32_t id;
 	uint32_t timeout;
 	 _Bool isPeriodic;
+	 _Bool isActive;
 	 onTimerFire_t cb;
 	 void *cbData;
 	 uint32_t cnt;
@@ -87,8 +88,11 @@ void SystemTimer_delayMsDummy(uint32_t delay) {
 	while (s_delayDecrement);
 }
 
-uint32_t SystemStatus_getUptime(void) {
+uint32_t System_getUptime(void) {
 	return s_uptimeSeconds;
+}
+uint32_t System_getUptimeMs(void) {
+	return s_uptimeTicks%TICKS_PER_SECOND;
 }
 
 uint32_t SystemTimer_newArmed(uint32_t tout, _Bool isPeriodic, onTimerFire_t cb, void *cbData) {
@@ -103,6 +107,7 @@ uint32_t SystemTimer_newArmed(uint32_t tout, _Bool isPeriodic, onTimerFire_t cb,
 		last->id = handle;
 		last->cnt = last->timeout = tout;
 		last->isPeriodic = isPeriodic;
+		last->isActive = true;
 		last->cb = cb;
 		last->cbData = cbData;
 		last->next = NULL;
@@ -117,11 +122,25 @@ void SystemTimer_rearm(uint32_t id) {
 		return;
 	timerNode_p node = findTimerById(id);
 	if (node) {
+		node->isActive = true;
 		node->cnt = node->timeout;
 	}
 }
 
 void SystemTimer_disarm(uint32_t id) {
+	if (id == INVALID_HANDLE)
+		return;
+	timerNode_p node = s_timersListHead;
+	while (node) {
+		if (node->id == id) {
+			node->isActive = false;
+			break;
+		}
+		node = node->next;
+	}
+}
+
+void SystemTimer_delete(uint32_t id) {
 	if (id == INVALID_HANDLE)
 		return;
 	timerNode_p node = s_timersListHead;
@@ -173,14 +192,14 @@ static timerNode_p findTimerById(uint32_t handle) {
 static void tickTimers(void) {
 	timerNode_p node = s_timersListHead;
 	while (node) {
-		if (!node->cnt--) {
+		if (node->isActive && !node->cnt--) {
 			node->cb(node->cbData);
 			if (node->isPeriodic)
 				node->cnt = node->timeout;
 			else {
 				uint32_t id = node->id;
 				node = node->next;
-				SystemTimer_disarm(id);
+				SystemTimer_delete(id);
 				continue;
 			}
 		}

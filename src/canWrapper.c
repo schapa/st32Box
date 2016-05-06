@@ -13,6 +13,11 @@
 #include "bsp.h"
 #include "memman.h"
 #include "misc.h"
+#include "dbg_base.h"
+
+#if 0
+#include "dbg_trace.h"
+#endif
 
 static CAN_HandleTypeDef *s_can1Handle = NULL;
 
@@ -94,10 +99,10 @@ void CAN_handleEvent(Event_p event) {
 			break;
 		case ES_CAN_TX: {
 			CanTxMsgTypeDef *tx = &event->data.can.txMsg;
-			trace_printf("[CAN] tx [%p] ok\n\r", tx->IDE ? tx->ExtId : tx->StdId);
+			DBGMSG_H("tx [%p] ok", tx->IDE ? tx->ExtId : tx->StdId);
 			} break;
 		case ES_CAN_ERROR:
-			trace_printf("[CAN_ERROR] id [%d] state %p errno %d\n\r",
+			DBGMSG_ERR("id [%d] state %p errno %d",
 					HELP_getCanIdByHandle(hcan), HAL_CAN_GetState(hcan), HAL_CAN_GetError(hcan));
 			break;
 	}

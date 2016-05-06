@@ -9,7 +9,6 @@
 #define MISC_H_
 
 #include "stm32f4xx_hal.h"
-#include "diag/Trace.h"
 
 void HELP_printMessage(void);
 void HELP_dumpUsartProps(USART_HandleTypeDef *usart);

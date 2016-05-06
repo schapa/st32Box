@@ -7,6 +7,11 @@
 
 #include "stm32f4xx_hal.h"
 #include "misc.h"
+#include "dbg_base.h"
+
+#if 0
+#include "dbg_trace.h"
+#endif
 
 static void dumpTargetProps(void);
 static uint32_t uxartIdByHandle(USART_TypeDef *usart);
@@ -27,52 +32,52 @@ static const char *const delim = "----------------------------------------------
 
 
 void HELP_printMessage(void) {
-	trace_printf("\n\r%s\n\r", delim);
+	DBGMSG_L("%s", delim);
 	dumpTargetProps();
-	trace_printf("%s\n\r", delim);
+	DBGMSG_H("%s", delim);
 }
 
 
 void HELP_dumpUsartProps(USART_HandleTypeDef *traceUsart) {
 	if (traceUsart) {
-		trace_printf("USART_%d\n\r", uxartIdByHandle(traceUsart->Instance));
-		trace_printf("\t        Pins: %s\n\r", uxartStrGPIO(traceUsart->Instance));
-		trace_printf("\t   Baud rate: %d\n\r", traceUsart->Init.BaudRate);
-		trace_printf("\t Word length: %s\n\r", usartStrWordLength(traceUsart->Init.WordLength));
-		trace_printf("\t      Parity: %s\n\r", usartStrParity(traceUsart->Init.Parity));
-		trace_printf("\t   Stop bits: %s\n\r", usartStrStopBits(traceUsart->Init.StopBits));
-		trace_printf("\t        Mode: %s\n\r", usartStrMode(traceUsart->Init.Mode));
+		DBGMSG_H("USART_%d", uxartIdByHandle(traceUsart->Instance));
+		DBGMSG_L("        Pins: %s", uxartStrGPIO(traceUsart->Instance));
+		DBGMSG_L("   Baud rate: %d", traceUsart->Init.BaudRate);
+		DBGMSG_L(" Word length: %s", usartStrWordLength(traceUsart->Init.WordLength));
+		DBGMSG_L("      Parity: %s", usartStrParity(traceUsart->Init.Parity));
+		DBGMSG_L("   Stop bits: %s", usartStrStopBits(traceUsart->Init.StopBits));
+		DBGMSG_L("        Mode: %s", usartStrMode(traceUsart->Init.Mode));
 	}
 }
 
 void HELP_dumpUartProps(UART_HandleTypeDef *uart) {
 	if (uart) {
-		trace_printf("UART_%d\n\r", uxartIdByHandle(uart->Instance));
-		trace_printf("\t        Pins: %s\n\r", uxartStrGPIO(uart->Instance));
-		trace_printf("\t   Baud rate: %d\n\r", uart->Init.BaudRate);
-		trace_printf("\t Word length: %s\n\r", uartStrWordLength(uart->Init.WordLength));
-		trace_printf("\t      Parity: %s\n\r", uartStrParity(uart->Init.Parity));
-		trace_printf("\t   Stop bits: %s\n\r", uartStrStopBits(uart->Init.StopBits));
-		trace_printf("\t        Mode: %s\n\r", uartStrMode(uart->Init.Mode));
+		DBGMSG_H("UART_%d", uxartIdByHandle(uart->Instance));
+		DBGMSG_L("        Pins: %s", uxartStrGPIO(uart->Instance));
+		DBGMSG_L("   Baud rate: %d", uart->Init.BaudRate);
+		DBGMSG_L(" Word length: %s", uartStrWordLength(uart->Init.WordLength));
+		DBGMSG_L("      Parity: %s", uartStrParity(uart->Init.Parity));
+		DBGMSG_L("   Stop bits: %s", uartStrStopBits(uart->Init.StopBits));
+		DBGMSG_L("        Mode: %s", uartStrMode(uart->Init.Mode));
 	}
 }
 
 void HELP_dumpCANProps(CAN_HandleTypeDef *canBus) {
 	if (canBus) {
-		trace_printf("CAN_%d\n\r", canIdByHandle(canBus->Instance));
-		trace_printf("\t        Pins: %s\n\r", canStrGPIO(canBus->Instance));
+		DBGMSG_H("CAN_%d", canIdByHandle(canBus->Instance));
+		DBGMSG_L("        Pins: %s", canStrGPIO(canBus->Instance));
 	}
 }
 
 void HELP_dumpCANRxMsg(CanRxMsgTypeDef *msg) {
 	uint32_t id = msg->IDE ? msg->ExtId : msg->StdId;
 	if (msg->RTR) {
-		trace_printf("RTR [%p] \n\r", id);
+		DBGMSG_L("RTR [%p] ", id);
 	} else {
-		trace_printf("DLC [%p] = [", id);
+		DBGMSG_L("DLC [%p] = [", id);
 		for (uint32_t i = 0; i < msg->DLC; i++)
-			trace_printf(" %d", msg->Data[i]);
-		trace_printf("] = %d\n\r", msg->DLC);
+			DBGMSG_L(" %d", msg->Data[i]);
+		DBGMSG_L("] = %d", msg->DLC);
 	}
 }
 
@@ -90,14 +95,14 @@ uint32_t HELP_getCanIdByHandle(CAN_HandleTypeDef *canBus) {
 
 
 static void dumpTargetProps(void) {
-	trace_printf("Target:\n\r");
-	trace_printf("\t DEV_ID: %p\n\r", HAL_GetDEVID());
-	trace_printf("\t REV_ID: %p\n\r", HAL_GetREVID());
-	trace_printf("\t SYSCLK: %d\n\r", HAL_RCC_GetSysClockFreq());
-	trace_printf("\t   HCLK: %d\n\r", HAL_RCC_GetHCLKFreq());
-	trace_printf("\t  PCLK1: %d\n\r", HAL_RCC_GetPCLK1Freq());
-	trace_printf("\t  PCLK2: %d\n\r", HAL_RCC_GetPCLK2Freq());
-	trace_printf("HalVersion: %p\n\r", HAL_GetHalVersion());
+	DBGMSG_H("Target:");
+	DBGMSG_L(" DEV_ID: %p", HAL_GetDEVID());
+	DBGMSG_L(" REV_ID: %p", HAL_GetREVID());
+	DBGMSG_L(" SYSCLK: %d", HAL_RCC_GetSysClockFreq());
+	DBGMSG_L("   HCLK: %d", HAL_RCC_GetHCLKFreq());
+	DBGMSG_L("  PCLK1: %d", HAL_RCC_GetPCLK1Freq());
+	DBGMSG_L("  PCLK2: %d", HAL_RCC_GetPCLK2Freq());
+	DBGMSG_H("HalVersion: %p", HAL_GetHalVersion());
 }
 
 static uint32_t uxartIdByHandle(USART_TypeDef *usart) {

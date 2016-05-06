@@ -18,6 +18,11 @@
 #include "canWrapper.h"
 #include "pwmWrapper.h"
 #include "USB_Generic.h"
+#include "dbg_base.h"
+
+#if 0
+#include "dbg_trace.h"
+#endif
 
 static void initGPIO_LED(void);
 
@@ -47,7 +52,7 @@ void BSP_init(void) {
 	USB_ACM_devInit();
 
 	if (initResult != HAL_OK) {
-		trace_printf("Init failed\n\r" \
+		DBGMSG_ERR("Init failed\n\r" \
 				"\t [USART_%d] state %d errno %d\n\r",
 				"\t [CAN_%d] state %d errno %d\n\r",
 				HELP_getUsartIdByHandle(pTraceUsart), HAL_USART_GetState(pTraceUsart), HAL_USART_GetError(pTraceUsart),
