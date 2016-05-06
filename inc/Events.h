@@ -54,8 +54,8 @@ typedef enum {
 typedef struct {
 	CAN_HandleTypeDef *hCan;
 	union {
-		CanTxMsgTypeDef txMsg;
-		CanRxMsgTypeDef rxMsg;
+		CanTxMsgTypeDef *txMsg;
+		CanRxMsgTypeDef *rxMsg;
 	};
 } CanDataTypes_t;
 

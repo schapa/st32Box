@@ -7,13 +7,13 @@
 
 
 #include <stdbool.h>
+#include <system.h>
 
 #include "bsp.h"
 #include "stm32f4xx_hal.h"
 #include "misc.h"
 #include "uartWrapper.h"
 #include "usartWrapper.h"
-#include "systemStatus.h"
 #include "extiWrapper.h"
 #include "canWrapper.h"
 #include "pwmWrapper.h"
@@ -28,24 +28,26 @@ static void initGPIO_LED(void);
 
 static volatile EventQueue_p s_eventQueue;
 static USART_HandleTypeDef s_traceUsart;
+static DMA_HandleTypeDef s_traceTxDma;
 static CAN_HandleTypeDef s_can1Bus;
 
 void BSP_init(void) {
 
 	USART_HandleTypeDef *pTraceUsart = &s_traceUsart;
+	DMA_HandleTypeDef *pTraceTxDma = &s_traceTxDma;
 	CAN_HandleTypeDef *pCan1Bus = &s_can1Bus;
 	HAL_StatusTypeDef initResult = HAL_OK;
 	initGPIO_LED();
 
-	initResult &= USART1_InitTrace(pTraceUsart);
+	initResult &= Trace_InitUSART1(pTraceUsart, pTraceTxDma);
 	initResult &= CAN_init(pCan1Bus);
 
 	HELP_printMessage();
 	HELP_dumpUsartProps(pTraceUsart);
 	HELP_dumpCANProps(pCan1Bus);
 
-	SystemStatus_set(INFORM_IDLE);
-	SystemStatus_setLedControl(Led_Green_SetState);
+	System_setStatus(INFORM_IDLE);
+	System_setLedControl(Led_Green_SetState);
 
 	EXTI_baseInit();
 	PWM_Init();

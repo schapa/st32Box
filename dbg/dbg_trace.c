@@ -5,32 +5,42 @@
  *      Author: shapa
  */
 
-#include "systemStatus.h"
-#include "diag/Trace.h"
+#include "usartWrapper.h"
 #include "dbg_trace.h"
+#include "system.h"
+#include "memman.h"
 #include <stdarg.h>
+#include <string.h>
 
-static char s_msgBuffer[1024];
+static char s_msgBuffer[4096];
 static int s_msgBufferSize = sizeof(s_msgBuffer);
 
-static inline void timestamp(void){
-	trace_printf("[%4d.%03d] ", System_getUptime(), System_getUptimeMs());
-}
+void dbgmsg(char *color, char *siverity, const char *file, const char *func, int line, char *fmt, ...) {
+	uint32_t primask = __get_PRIMASK();
+	__disable_irq();
 
-void dbgmsg(char *clr, char *siv, const char *file, const char *func, int line, char *fmt, ...) {
-	timestamp();
-	trace_printf("%s::%s (%d)", file, func, line);
-	trace_printf("%s", clr);
-	trace_printf(" %s: ", siv);
-	va_list ap;
-	va_start (ap, fmt);
-
-	int ret = vsnprintf (s_msgBuffer, s_msgBufferSize, fmt, ap);
-	ret = ret > s_msgBufferSize ? s_msgBufferSize : ret;
-
-	if (ret > 0) {
-		ret = trace_write (s_msgBuffer, (size_t)ret);
+	int occupied = snprintf(s_msgBuffer, s_msgBufferSize, "[%4lu.%03lu] %s::%s (%d)%s %s: ",
+			System_getUptime(), System_getUptimeMs(), file, func, line, color, siverity);
+	if (occupied < s_msgBufferSize) {
+		va_list ap;
+		va_start (ap, fmt);
+		occupied += vsnprintf(&s_msgBuffer[occupied], s_msgBufferSize - occupied, fmt, ap);
+		va_end (ap);
 	}
-	va_end (ap);
-	trace_printf(ANSI_ESC_DEFAULT"\r\n");
+	if (occupied < s_msgBufferSize) {
+		occupied += snprintf(&s_msgBuffer[occupied], s_msgBufferSize - occupied, ANSI_ESC_DEFAULT"\r\n");
+	}
+	if (occupied > s_msgBufferSize) {
+		char *trim = "...";
+		size_t size = strlen(trim) + 1;
+		snprintf(&s_msgBuffer[s_msgBufferSize-size], size, trim);
+	}
+	char *newBuff = (char*)MEMMAN_malloc(occupied);
+	if (newBuff) {
+		memcpy((void*)newBuff, (void*)s_msgBuffer, occupied);
+	}
+	if (!primask) {
+		__enable_irq();
+	}
+	Trace_dataAsync(newBuff, occupied);
 }

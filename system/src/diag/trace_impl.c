@@ -74,8 +74,8 @@ trace_write (const char* buf __attribute__((unused)),
   return _trace_write_semihosting_stdout(buf, nbyte);
 #elif defined(OS_USE_TRACE_SEMIHOSTING_DEBUG)
 //  return _trace_write_semihosting_debug(buf, nbyte);
-  extern int trace_write_usart(const char *buf, size_t nbyte);
-  return trace_write_usart(buf, nbyte);
+  extern int trace_write_usart_blocking(const char *buf, size_t nbyte);
+  return trace_write_usart_blocking(buf, nbyte);
   (void)_trace_write_semihosting_debug;
 #endif
 

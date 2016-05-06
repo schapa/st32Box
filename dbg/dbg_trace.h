@@ -8,7 +8,7 @@
 #ifndef DBG_TRACE_H_
 #define DBG_TRACE_H_
 
-#include "systemStatus.h"
+#include <system.h>
 #include "diag/Trace.h"
 #include "dbg_base.h"
 

@@ -6,9 +6,9 @@
  */
 
 #include <stdint.h>
+#include <system.h>
 #include "stm32f4xx_hal.h"
 
-#include "systemStatus.h"
 #include "usartWrapper.h"
 #include "misc.h"
 
@@ -81,6 +81,6 @@ void simpleTest(void) {
 	while (1) {
 		HAL_StatusTypeDef status = HAL_USART_Transmit(&usart, s_testingSequence, 15, 0xFF);
 		trace_printf("tr [%d]\n\r", status);
-		SystemTimer_delayMsDummy(100);
+		System_delayMsDummy(100);
 	}
 }

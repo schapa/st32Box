@@ -5,8 +5,8 @@
  *      Author: pavelgamov
  */
 
-#ifndef SYSTEMSTATUS_H_
-#define SYSTEMSTATUS_H_
+#ifndef SYSTEM_H_
+#define SYSTEM_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -24,13 +24,13 @@ typedef enum {
 
 typedef void (*ledOutputControl_t)(FunctionalState);
 
-void SystemStatus_setLedControl(ledOutputControl_t);
-void SystemStatus_set(systemStatus_t);
+void System_setLedControl(ledOutputControl_t);
+void System_setStatus(systemStatus_t);
 
 uint32_t System_getUptime(void);
 uint32_t System_getUptimeMs(void);
 
-void SystemTimer_delayMsDummy(uint32_t delay);
+void System_delayMsDummy(uint32_t delay);
 
 
-#endif /* SYSTEMSTATUS_H_ */
+#endif /* SYSTEM_H_ */

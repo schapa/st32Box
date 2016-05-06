@@ -78,20 +78,13 @@ static _Bool setMultipleMode (Request_p req) {
 	return true;
 }
 
-static _Bool openUPnPDiscoverConnection (Request_p req) {
+static _Bool openUpdBroadcast (Request_p req) {
 	char *buff = (char*)req->tx.buff;
 	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPSTART=0,\"UDP\",\"239.255.255.250\",1900"CRLF);
 	return true;
 }
 
 char *upnpDiscoverer = "M-SEARCH * HTTP/1.1\r\nHOST:239.255.255.250:1900\r\nMAN:\"ssdp:discover\"\r\nST:ssdp:all\r\nMX:3\r\n\r\n";
-//static const char *upnpDiscoverer =
-//"M-SEARCH * HTTP/1.1\n\r"
-//"HOST: 239.255.255.250:1900\n\r"
-//"ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\n\r"
-//"MAN: \"ssdp:discover\"\n\r"
-//"MX: 2\n\r\n\r"
-//;
 
 static _Bool prepareToSend (Request_p req) {
 	char *buff = (char*)req->tx.buff;
@@ -108,6 +101,32 @@ static _Bool uPnPDiscoverAck (Request_p req) {
 	DBGMSG_M("[UPnP]\n\r%s", req->rx.buff);
 	return true;
 }
+static _Bool closeUpdBroadcast (Request_p req) {
+	char *buff = (char*)req->tx.buff;
+	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPCLOSE=0"CRLF);
+	return true;
+}
+
+static _Bool openTCP (Request_p req) {
+	char *buff = (char*)req->tx.buff;
+	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPSTART=0,\"TCP\",\"192.168.1.1\",39201"CRLF);
+	return true;
+}
+char *getRoo = "GET /rootDesc.xml\r\n\r\n";
+static _Bool prepareRoot (Request_p req) {
+	char *buff = (char*)req->tx.buff;
+	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPSEND=0,%d"CRLF, strlen(getRoo));
+	return true;
+}
+static _Bool getRootDsc (Request_p req) {
+	char *buff = (char*)req->tx.buff;
+	req->tx.occupied = snprintf(buff, req->tx.size, "%s"CRLF, getRoo);
+	return true;
+}
+static _Bool getRootAck (Request_p req) {
+	DBGMSG_M("[Roo]\n\r%s", req->rx.buff);
+	return true;
+}
 
 
 static Step_t steps[] = {
@@ -118,15 +137,20 @@ static Step_t steps[] = {
 	{ startConnect, 				NULL, 				NULL, STEP_INIT, 0, NULL },
 	{ getMyAdress, 					getMyAdressOk, 		NULL, STEP_INIT, 0, NULL },
 	{ setMultipleMode, 				NULL, 				NULL, STEP_INIT, 0, NULL },
-	{ openUPnPDiscoverConnection, 	NULL, 				NULL, STEP_INIT, 0, NULL },
+	{ openUpdBroadcast, 			NULL, 				NULL, STEP_INIT, 0, NULL },
 	{ prepareToSend, 				NULL, 				NULL, STEP_INIT, 0, "> " },
-	{ sendUPnPDiscover, 			uPnPDiscoverAck, 	NULL, STEP_INIT, 0, NULL },
+	{ sendUPnPDiscover, 			NULL, 				NULL, STEP_INIT, 0, "SEND OK" },
+	{ NULL, 						uPnPDiscoverAck, 	NULL, STEP_INIT, 0, NULL },
+	{ closeUpdBroadcast, 			NULL, 				NULL, STEP_INIT, 0, NULL },
+	{ openTCP, 						NULL, 				NULL, STEP_INIT, 0, NULL },
+	{ prepareRoot, 					NULL, 				NULL, STEP_INIT, 0, NULL },
+	{ getRootDsc,		 			getRootAck, 		NULL, STEP_INIT, 0, "0,CLOSED" },
 };
 
 static char queryBuffer[1024];
 static UART_HandleTypeDef s_uart;
 
-static Request_t testReq = {
+Request_t testReq = {
 		0, QUERY_INIT,
 		steps, sizeof(steps)/sizeof(*steps), 0,
 		{ queryBuffer, sizeof(queryBuffer), 0 }

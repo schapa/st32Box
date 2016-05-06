@@ -123,9 +123,11 @@ static _Bool isStepAck(Request_p req, _Bool *isOk) {
 		if (req->rx.occupied >= ackOkSize) {
 			char *ptr = (char*)&req->rx.buff[req->rx.occupied - ackOkSize];
 			if (!strcmp(ptr, ackOk)) {
-				*isOk = true;
-				result = true;
-				break;
+				if ((req->rx.occupied <= ackOkSize) || (*(ptr - 1) == '\r')) {
+					*isOk = true;
+					result = true;
+					break;
+				}
 			}
 		}
 

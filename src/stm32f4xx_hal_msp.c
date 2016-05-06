@@ -21,6 +21,7 @@ void HAL_USART_MspInit(USART_HandleTypeDef *husart) {
 	if (husart->Instance == USART1) {
 		__HAL_RCC_GPIOA_CLK_ENABLE();
 		__HAL_RCC_USART1_CLK_ENABLE();
+		__HAL_RCC_DMA2_CLK_ENABLE();
 		initGPIO_USART1_Trace();
 	} else if (husart->Instance == USART2) {
 		__HAL_RCC_GPIOD_CLK_ENABLE();
@@ -84,7 +85,7 @@ static void initGPIO_USART1_Trace(void) {
 			GPIO_PIN_9 | GPIO_PIN_10,
 			GPIO_MODE_AF_PP,
 			GPIO_NOPULL,
-			GPIO_SPEED_FREQ_LOW,
+			GPIO_SPEED_FREQ_HIGH,
 			GPIO_AF7_USART1
 	};
 	HAL_GPIO_Init(GPIOA, &iface);
@@ -96,7 +97,7 @@ static void initGPIO_USART2(void) {
 			GPIO_PIN_5 | GPIO_PIN_6,
 			GPIO_MODE_AF_PP,
 			GPIO_NOPULL,
-			GPIO_SPEED_FREQ_LOW,
+			GPIO_SPEED_FREQ_HIGH,
 			GPIO_AF7_USART2
 	};
 	HAL_GPIO_Init(GPIOD, &iface);
@@ -108,7 +109,7 @@ static void initGPIO_UART4(void) {
 			GPIO_PIN_10 | GPIO_PIN_11,
 			GPIO_MODE_AF_PP,
 			GPIO_NOPULL,
-			GPIO_SPEED_FREQ_LOW,
+			GPIO_SPEED_FREQ_HIGH,
 			GPIO_AF8_UART4
 	};
 	HAL_GPIO_Init(GPIOC, &iface);

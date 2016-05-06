@@ -5,12 +5,12 @@
  *      Author: shapa
  */
 
+#include <system.h>
 #include "uartWrapper.h"
 #include "string.h"
 #include "bsp.h"
 #include "memman.h"
 #include "misc.h"
-#include "systemStatus.h"
 #include "timers.h"
 #include "dbg_base.h"
 
@@ -74,6 +74,9 @@ void UART_handleEvent(Event_p event) {
 			DBGMSG_M("[TX] id [%d] state %p size %d",
 					HELP_getUartIdByHandle(huart), HAL_UART_GetState(huart), huart->TxXferSize);
 			huart->pTxBuffPtr -= huart->TxXferSize;
+			for(i = 0; i < huart->TxXferSize; i++) {
+				DBGMSG_L(" %c", huart->pTxBuffPtr[i]);
+			}
 			huart->TxXferSize = 0;
 			break;
 		case ES_UxART_RXTX:
@@ -142,6 +145,10 @@ static void handleUart4_RX(UART_HandleTypeDef *huart) {
 				} else if (countValidChars(buffer, currentPos)) {
 					send = true;
 					currentPos--;
+				}
+			} else if (currentPos == 2) { /* corner case for "> " */
+				if (buffer[0] == '>' && buffer[1] == ' ') {
+					send = true;
 				}
 			}
 		} else {

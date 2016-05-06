@@ -92,14 +92,16 @@ void CAN_handleEvent(Event_p event) {
 	if (!event)
 		return;
 	CAN_HandleTypeDef *hcan = event->data.can.hCan;
-	CanRxMsgTypeDef *rx = &event->data.can.rxMsg;
 	switch (event->subType.can) {
-		case ES_CAN_RX:
+		case ES_CAN_RX: {
+			CanRxMsgTypeDef *rx = event->data.can.rxMsg;
 			HELP_dumpCANRxMsg(rx);
-			break;
+			MEMMAN_free(rx);
+			} break;
 		case ES_CAN_TX: {
-			CanTxMsgTypeDef *tx = &event->data.can.txMsg;
+			CanTxMsgTypeDef *tx = event->data.can.txMsg;
 			DBGMSG_H("tx [%p] ok", tx->IDE ? tx->ExtId : tx->StdId);
+			MEMMAN_free(tx);
 			} break;
 		case ES_CAN_ERROR:
 			DBGMSG_ERR("id [%d] state %p errno %d",
@@ -113,10 +115,9 @@ void HAL_CAN_TxCpltCallback(CAN_HandleTypeDef* hcan) {
 		Event_t event = { EVENT_CAN, { ES_CAN_TX },
 				.data.can = {
 						hcan,
-						.txMsg = *hcan->pTxMsg
+						.txMsg = hcan->pTxMsg
 				}
 		};
-		MEMMAN_free(hcan->pTxMsg);
 		BSP_queuePush(&event);
 	}
 }
@@ -126,10 +127,11 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 		Event_t event = { EVENT_CAN, { ES_CAN_RX },
 				.data.can = {
 						hcan,
-						.rxMsg = *hcan->pRxMsg
+						.rxMsg = hcan->pRxMsg
 				}
 		};
 		BSP_queuePush(&event);
+		hcan->pRxMsg = MEMMAN_malloc(sizeof(*hcan->pRxMsg));
 		HAL_CAN_Receive_IT(hcan, CAN_FIFO0);
 	}
 }
@@ -137,10 +139,7 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* hcan) {
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
 	if (hcan) {
 		Event_t event = { EVENT_CAN, { ES_CAN_ERROR },
-				.data.can = {
-						hcan,
-						.txMsg = *hcan->pTxMsg
-				}
+				.data.can.hCan = hcan
 		};
 		BSP_queuePush(&event);
 	}

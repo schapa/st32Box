@@ -6,9 +6,9 @@
  */
 
 #include <stddef.h>
+#include <system.h>
 
 #include "bsp.h"
-#include "systemStatus.h"
 
 #define TICKS_PER_SECOND 1000
 
@@ -31,11 +31,11 @@ static volatile uint32_t s_delayDecrement = 0;
 static volatile uint32_t s_uptimeSeconds = 0;
 static volatile uint32_t s_uptimeTicks = 0;
 
-void SystemStatus_setLedControl(ledOutputControl_t control) {
+void System_setLedControl(ledOutputControl_t control) {
 	s_systemLed = control;
 }
 
-void SystemStatus_set(systemStatus_t status) {
+void System_setStatus(systemStatus_t status) {
 	if(status < INFORM_LAST) {
 		s_systemStatus = status;
 	}
@@ -63,7 +63,7 @@ void SysTick_Handler(void) {
 #endif
 }
 
-void SystemTimer_delayMsDummy(uint32_t delay) {
+void System_delayMsDummy(uint32_t delay) {
 	s_delayDecrement = delay;
 	while (s_delayDecrement);
 }

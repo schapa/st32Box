@@ -18,6 +18,7 @@
 #include "misc.h"
 #include "timers.h"
 #include "dbg_base.h"
+#include "Query.h"
 
 #if 01
 #include "dbg_trace.h"
@@ -72,6 +73,9 @@ QueryTest(NULL, 0);
 				if (event.subType.systick == ES_SYSTICK_SECOND_ELAPSED) {
 					Timer_makeTick();
 				}
+			case EVENT_USART:
+				USART_handleEvent(&event);
+				break;
 			case EVENT_DUMMY:
 				break;
 			default:
