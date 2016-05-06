@@ -73,4 +73,10 @@ typedef union {
 } EventDataTypes_t;
 
 
+typedef struct {
+	EventTypes_t type;
+	EventSubTypes_t subType;
+	EventDataTypes_t data;
+} Event_t, *Event_p;
+
 #endif /* EVENTS_H_ */

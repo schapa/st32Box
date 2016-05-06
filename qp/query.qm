@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.3.0">
+ <framework name="qpc"/>
+ <package name="QueryEng" stereotype="0x00">
+  <class name="QueryEngine" superclass="qpc::QActive">
+   <attribute name="timeEvt" type="QTimeEvt" visibility="0x00" properties="0x00"/>
+   <attribute name="evtStorage[128]" type="QEvt const *" visibility="0x02" properties="0x00"/>
+   <operation name="ctor" type="void" visibility="0x00" properties="0x00">
+    <code>DBGMSG_M(&quot;Create&quot;);
+QActive_ctor(&amp;me-&gt;super, Q_STATE_CAST(&amp;QueryEngine_initial));
+QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
+   </operation>
+   <statechart>
+    <initial target="../1/2">
+     <action>(void)e;
+QTimeEvt_armX(&amp;me-&gt;timeEvt, BSP_TICKS_PER_SECOND/2U, BSP_TICKS_PER_SECOND/2U);</action>
+     <initial_glyph conn="4,2,5,0,14,7">
+      <action box="0,-2,10,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="Working">
+     <entry>DBGMSG_M(&quot;Q_ENTRY&quot;);
+//QTimeEvt_armX(&amp;me-&gt;timeEvt, BSP_TICKS_PER_SECOND/2U, BSP_TICKS_PER_SECOND/2U);</entry>
+     <exit>DBGMSG_M(&quot;Q_EXIT&quot;);</exit>
+     <tran trig="SYSTEM">
+      <action>DBGMSG_M(&quot;SYS&quot;);
+HandleSysEvt(e);</action>
+      <tran_glyph conn="4,38,3,-1,11">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="TIMEOUT" target="../2">
+      <tran_glyph conn="4,19,3,3,6">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state name="Init">
+      <tran trig="TIMEOUT" target="../../3">
+       <tran_glyph conn="31,16,1,3,6">
+        <action box="0,-2,10,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="10,9,21,19"/>
+     </state>
+     <state name="Processing">
+      <tran trig="TIMEOUT" target="../../4">
+       <tran_glyph conn="58,16,1,3,6">
+        <action box="0,-2,10,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="37,9,21,19"/>
+     </state>
+     <state name="Waiting">
+      <tran trig="TIMEOUT" target="../../5">
+       <tran_glyph conn="75,28,2,1,11,-17">
+        <action box="-10,9,10,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="64,9,21,19"/>
+     </state>
+     <state name="Done">
+      <state_glyph node="37,35,21,19"/>
+     </state>
+     <state_glyph node="4,5,84,55">
+      <entry box="1,2,6,2"/>
+      <exit box="1,4,6,2"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="130,61"/>
+   </statechart>
+  </class>
+  <class name="SystemEvent" superclass="qpc::QEvt">
+   <attribute name="event" type="Event_t" visibility="0x00" properties="0x00"/>
+  </class>
+  <directory name=".">
+   <file name="QueryEngine.h">
+    <text>#pragma once
+
+#include &quot;qp_port.h&quot;
+#include &quot;Events.h&quot;
+
+enum BlinkySignals {
+    DUMMY_SIG = Q_USER_SIG,
+    SYSTEM_SIG,
+    TIMEOUT_SIG,
+    MAX_SIG               /* the last signal */
+};
+
+QActive *AO_system(void);
+
+$declare(QueryEng::SystemEvent)
+
+$declare(QueryEng::QueryEngine)</text>
+   </file>
+   <file name="QueryEngine.c">
+    <text>#include &quot;qp_port.h&quot;
+#include &quot;QueryEngine.h&quot;
+#include &lt;stdint.h&gt;
+#include &quot;bsp.h&quot;
+#include &quot;dbg_base.h&quot;
+#if 01
+#include &quot;dbg_trace.h&quot;
+#endif
+
+static void HandleSysEvt(SystemEvent *evt);
+
+static QueryEngine s_engine;
+static QActive * s_pEngine = NULL;
+
+QActive * AO_system(void) {
+    if (!s_pEngine) {
+        QueryEngine_ctor(&amp;s_engine);
+        s_pEngine = &amp;s_engine;
+    }
+    return s_pEngine;
+}
+
+$define(QueryEng::QueryEngine)
+
+static void HandleSysEvt(SystemEvent *evt) {
+
+    extern void QueryTest(uint8_t *buff, size_t size);
+    QueryTest(NULL, 0);
+
+    Event_p event = &amp;evt-&gt;event;
+    switch (event-&gt;type) {
+        case EVENT_EXTI: {
+            DBGMSG_L(&quot;[Exti] pin %d act %d&quot;, event-&gt;data, event-&gt;subType.exti);
+            char *text = &quot;hello !&quot;;
+            CanTxMsgTypeDef txMsg = {
+                    0x22, 0,
+                    CAN_ID_STD,
+                    CAN_RTR_DATA,
+                    8,
+                    { text[0], text[1], text[2], text[3], text[4], text[5], text[6], text[7] }
+            };
+            USB_ACM_write((uint8_t*)text, strlen(text));
+            CAN_write(&amp;txMsg);
+            } break;
+        case EVENT_UART:
+            UART_handleEvent(event);
+            break;
+        case EVENT_UxART_Buffer: {
+            uint8_t *buff = (uint8_t *)event-&gt;data.uxart.buffer;
+            size_t size = event-&gt;data.uxart.size;
+            switch (event-&gt;subType.uxart) {
+                case ES_UxART_RX:
+                    DBGMSG_H(&quot;[RX] [%s]&quot;, buff);
+                    QueryTest(buff, size);
+                    MEMMAN_free(buff);
+                    break;
+                default:
+                    break;
+            }
+        } break;
+        case EVENT_CAN:
+            CAN_handleEvent(event);
+            break;
+        case EVENT_SYSTICK:
+            if (event-&gt;subType.systick == ES_SYSTICK_SECOND_ELAPSED) {
+                Timer_makeTick();
+            }
+        case EVENT_USART:
+            USART_handleEvent(event);
+            break;
+        case EVENT_DUMMY:
+            break;
+        default:
+            DBGMSG_WARN(&quot;Unhandled Event type %p data %p!&quot;, event-&gt;type, event-&gt;data);
+            break;
+    }
+}</text>
+   </file>
+  </directory>
+ </package>
+</model>

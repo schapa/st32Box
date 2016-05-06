@@ -9,14 +9,13 @@
 #define BSP_H_
 
 #include "stm32f4xx_hal.h"
+#include "Events.h"
 
-#include "Queue.h"
+#define BSP_TICKS_PER_SECOND 1000
 
 void BSP_init(void);
 
 void BSP_queuePush(Event_p pEvent);
-void BSP_pendEvent(Event_p pEvent);
-_Bool BSP_queueIsEventPending(Event_p pEvent);
 
 void Led_Red_SetState(FunctionalState state);
 void Led_Green_SetState(FunctionalState state);

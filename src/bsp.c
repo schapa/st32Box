@@ -19,6 +19,7 @@
 #include "pwmWrapper.h"
 #include "USB_Generic.h"
 #include "dbg_base.h"
+#include "QueryEngine.h"
 
 #if 0
 #include "dbg_trace.h"
@@ -26,7 +27,6 @@
 
 static void initGPIO_LED(void);
 
-static volatile EventQueue_p s_eventQueue;
 static USART_HandleTypeDef s_traceUsart;
 static DMA_HandleTypeDef s_traceTxDma;
 static CAN_HandleTypeDef s_can1Bus;
@@ -63,27 +63,9 @@ void BSP_init(void) {
 }
 
 void BSP_queuePush(Event_p pEvent) {
-	uint32_t primask = __get_PRIMASK();
-	__disable_irq();
-	s_eventQueue = Queue_pushEvent(s_eventQueue, pEvent);
-	if (!primask) {
-		__enable_irq();
-	}
-}
-
-void BSP_pendEvent(Event_p pEvent) {
-	while (!s_eventQueue);
-	uint32_t primask = __get_PRIMASK();
-	__disable_irq();
-	s_eventQueue = Queue_getEvent(s_eventQueue, pEvent);
-	if (!primask) {
-		__enable_irq();
-	}
-}
-
-_Bool BSP_queueIsEventPending(Event_p pEvent) {
-	s_eventQueue = Queue_getEvent(s_eventQueue, pEvent);
-	return !!s_eventQueue;
+	SystemEvent *evt = Q_NEW(SystemEvent, SYSTEM_SIG);
+	evt->event = *pEvent;
+    QACTIVE_POST(AO_system(), evt, NULL);
 }
 
 void Led_Red_SetState(FunctionalState state) {
