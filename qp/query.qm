@@ -48,32 +48,71 @@ QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state name="Processing">
-      <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
-      <tran trig="TIMEOUT" target="../../4">
+     <state name="Connect">
+      <entry>DBGMSG_M(&quot;Entry&quot;);
+systemConfig_p config = SystemConfig_get();
+if (config-&gt;discoveredApnsSize &amp;&amp; config-&gt;knownApnsCount) {
+    size_t i, j;
+    size_t matchCount = 0;
+    size_t matchIdx = -1;
+    DBGMSG_M(&quot;Credentials/Found %d/%d&quot;, config-&gt;knownApnsCount, config-&gt;discoveredApnsSize);
+    for (i = 0; i &lt; config-&gt;knownApnsCount; i++) {
+        for (j = 0; j &lt; config-&gt;discoveredApnsSize; j++) {
+            DBGMSG_H(&quot;[%s] == [%s]&quot;, config-&gt;knownApns[i].ssid, config-&gt;discoveredApns[j].ssid);
+            if (!strcmp(config-&gt;knownApns[i].ssid, config-&gt;discoveredApns[j].ssid)) {
+                DBGMSG_H(&quot; Match %d [%s]&quot;, i, config-&gt;knownApns[i].ssid);
+                matchIdx = i;
+                matchCount++;
+            }
+        }
+    }
+    if (matchCount) {
+        if (matchCount == 1) {
+           RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+           evt-&gt;request = Request_GetConnect(config-&gt;knownApns[matchIdx].ssid, config-&gt;knownApns[matchIdx].passwd);
+           DBGMSG_H(&quot;Connect To &lt;%s&gt;:&lt;%s&gt;&quot;, config-&gt;knownApns[matchIdx].ssid, config-&gt;knownApns[matchIdx].passwd);
+           QACTIVE_POST(AO_QueryEngine(), evt, NULL);
+        } else {
+            DBGMSG_ERR(&quot;TODO: implement multiple credentials&quot;);
+        }
+    }
+}</entry>
+      <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
+      <tran trig="QUERY_DONE" target="../../4">
        <tran_glyph conn="58,16,1,3,6">
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
       <state_glyph node="37,9,21,19">
        <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state name="Waiting">
-      <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
-      <tran trig="TIMEOUT" target="../../5">
-       <tran_glyph conn="75,28,2,1,11,-17">
-        <action box="-10,9,10,2"/>
+     <state name="UPnPDiscoverer">
+      <entry>DBGMSG_M(&quot;Entry&quot;);
+RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+evt-&gt;request = Request_GetUPnPDiscoverer();
+QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
+      <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
+      <tran trig="QUERY_DONE" target="../../5">
+       <tran_glyph conn="75,28,2,0,5">
+        <action box="-6,-2,10,2"/>
        </tran_glyph>
       </tran>
       <state_glyph node="64,9,21,19">
        <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state name="Done">
-      <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
-      <state_glyph node="37,35,21,19">
+     <state name="GetRootXml">
+      <entry>DBGMSG_M(&quot;Entry&quot;);
+RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+evt-&gt;request = Request_GetRootXml();
+QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
+      <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
+      <state_glyph node="64,33,21,19">
        <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
      <state_glyph node="4,5,84,55">
@@ -303,6 +342,7 @@ $declare(System::Engine)</text>
 #include &quot;Engine.h&quot;
 #include &quot;QueryEngine.h&quot;
 #include &lt;stdint.h&gt;
+#include &lt;string.h&gt;
 #include &quot;requests.h&quot;
 #include &quot;bsp.h&quot;
 #include &quot;dbg_base.h&quot;

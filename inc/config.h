@@ -19,11 +19,14 @@ typedef struct {
 	WIFI_APN_p discoveredApns;
 	size_t discoveredApnsSize;
 
-	credentials_p *knownApns;
+	credentials_p knownApns;
 	size_t knownApnsCount;
 
 	uint16_t externalPort;
 	_Bool isUPnPActive;
+
+	uint32_t selfIp;
+	uint64_t selfMac;
 } systemConfig_t, *systemConfig_p;
 
 systemConfig_p SystemConfig_get(void);

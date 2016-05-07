@@ -7,9 +7,13 @@
 
 #include "config.h"
 
+static const credentials_t s_knownApns[] = {
+		{ "shapa", "jnghfdkzq" }
+};
+
 static systemConfig_t s_defaultConfig = {
 		NULL, 0,
-		{ { "a", "b" } }, 1,
+		s_knownApns, sizeof(s_knownApns)/sizeof(*s_knownApns),
 		8266,
 		true
 };

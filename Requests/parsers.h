@@ -32,5 +32,6 @@ typedef struct {
  * return true on success
  */
 _Bool Parse_APN(const char *buffer, size_t size, WIFI_APN_p *pApns, size_t *apnsCount);
+_Bool Parse_IP(const char *buffer, size_t size, uint32_t *pIp, uint64_t *pMac);
 
 #endif /* PARSERS_H_ */

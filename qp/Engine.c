@@ -19,6 +19,7 @@
 #include "Engine.h"
 #include "QueryEngine.h"
 #include <stdint.h>
+#include <string.h>
 #include "requests.h"
 #include "bsp.h"
 #include "dbg_base.h"
@@ -108,7 +109,7 @@ QState Engine_Init(Engine * const me, QEvt const * const e) {
         }
         /* ${System::Engine::SM::Working::Init::QUERY_DONE} */
         case QUERY_DONE_SIG: {
-            status_ = Q_TRAN(&Engine_Processing);
+            status_ = Q_TRAN(&Engine_Connect);
             break;
         }
         default: {
@@ -118,41 +119,52 @@ QState Engine_Init(Engine * const me, QEvt const * const e) {
     }
     return status_;
 }
-/*${System::Engine::SM::Working::Processing} ...............................*/
-QState Engine_Processing(Engine * const me, QEvt const * const e) {
+/*${System::Engine::SM::Working::Connect} ..................................*/
+QState Engine_Connect(Engine * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${System::Engine::SM::Working::Processing} */
+        /* ${System::Engine::SM::Working::Connect} */
         case Q_ENTRY_SIG: {
             DBGMSG_M("Entry");
+            systemConfig_p config = SystemConfig_get();
+            if (config->discoveredApnsSize && config->knownApnsCount) {
+                size_t i, j;
+                size_t matchCount = 0;
+                size_t matchIdx = -1;
+                DBGMSG_M("Credentials/Found %d/%d", config->knownApnsCount, config->discoveredApnsSize);
+                for (i = 0; i < config->knownApnsCount; i++) {
+                    for (j = 0; j < config->discoveredApnsSize; j++) {
+                        DBGMSG_H("[%s] == [%s]", config->knownApns[i].ssid, config->discoveredApns[j].ssid);
+                        if (!strcmp(config->knownApns[i].ssid, config->discoveredApns[j].ssid)) {
+                            DBGMSG_H(" Match %d [%s]", i, config->knownApns[i].ssid);
+                            matchIdx = i;
+                            matchCount++;
+                        }
+                    }
+                }
+                if (matchCount) {
+                    if (matchCount == 1) {
+                       RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+                       evt->request = Request_GetConnect(config->knownApns[matchIdx].ssid, config->knownApns[matchIdx].passwd);
+                       DBGMSG_H("Connect To <%s>:<%s>", config->knownApns[matchIdx].ssid, config->knownApns[matchIdx].passwd);
+                       QACTIVE_POST(AO_QueryEngine(), evt, NULL);
+                    } else {
+                        DBGMSG_ERR("TODO: implement multiple credentials");
+                    }
+                }
+            }
             status_ = Q_HANDLED();
             break;
         }
-        /* ${System::Engine::SM::Working::Processing::TIMEOUT} */
-        case TIMEOUT_SIG: {
-            status_ = Q_TRAN(&Engine_Waiting);
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&Engine_Working);
-            break;
-        }
-    }
-    return status_;
-}
-/*${System::Engine::SM::Working::Waiting} ..................................*/
-QState Engine_Waiting(Engine * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${System::Engine::SM::Working::Waiting} */
-        case Q_ENTRY_SIG: {
-            DBGMSG_M("Entry");
+        /* ${System::Engine::SM::Working::Connect} */
+        case Q_EXIT_SIG: {
+            DBGMSG_M("Exit");
             status_ = Q_HANDLED();
             break;
         }
-        /* ${System::Engine::SM::Working::Waiting::TIMEOUT} */
-        case TIMEOUT_SIG: {
-            status_ = Q_TRAN(&Engine_Done);
+        /* ${System::Engine::SM::Working::Connect::QUERY_DONE} */
+        case QUERY_DONE_SIG: {
+            status_ = Q_TRAN(&Engine_UPnPDiscoverer);
             break;
         }
         default: {
@@ -162,13 +174,53 @@ QState Engine_Waiting(Engine * const me, QEvt const * const e) {
     }
     return status_;
 }
-/*${System::Engine::SM::Working::Done} .....................................*/
-QState Engine_Done(Engine * const me, QEvt const * const e) {
+/*${System::Engine::SM::Working::UPnPDiscoverer} ...........................*/
+QState Engine_UPnPDiscoverer(Engine * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${System::Engine::SM::Working::Done} */
+        /* ${System::Engine::SM::Working::UPnPDiscoverer} */
         case Q_ENTRY_SIG: {
             DBGMSG_M("Entry");
+            RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+            evt->request = Request_GetUPnPDiscoverer();
+            QACTIVE_POST(AO_QueryEngine(), evt, NULL);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnPDiscoverer} */
+        case Q_EXIT_SIG: {
+            DBGMSG_M("Exit");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnPDiscoverer::QUERY_DONE} */
+        case QUERY_DONE_SIG: {
+            status_ = Q_TRAN(&Engine_GetRootXml);
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&Engine_Working);
+            break;
+        }
+    }
+    return status_;
+}
+/*${System::Engine::SM::Working::GetRootXml} ...............................*/
+QState Engine_GetRootXml(Engine * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${System::Engine::SM::Working::GetRootXml} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+            evt->request = Request_GetRootXml();
+            QACTIVE_POST(AO_QueryEngine(), evt, NULL);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::GetRootXml} */
+        case Q_EXIT_SIG: {
+            DBGMSG_M("Exit");
             status_ = Q_HANDLED();
             break;
         }

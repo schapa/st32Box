@@ -10,6 +10,7 @@
 
 #include "stm32f4xx_hal.h"
 #include "Events.h"
+#include "config.h"
 
 #define BSP_TICKS_PER_SECOND 1000
 

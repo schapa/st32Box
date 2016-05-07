@@ -17,15 +17,11 @@
 #include "dbg_trace.h"
 #endif
 
-#define CRLF "\r\n"
-
 static _Bool restartModule (Request_p req);
 static _Bool echoOff (Request_p req);
 static _Bool modeChange (Request_p req);
 static _Bool listAccessPoints (Request_p req);
 static _Bool parseAccessPointsList (Request_p req);
-
-static char s_txBuffer[32];
 
 static Step_t s_steps[] = {
 	{ restartModule, 	NULL, 					NULL, 0, 0, "ready" },
@@ -38,7 +34,7 @@ Request_p Request_GetInitial(void) {
 	static Request_t request = {
 			QUERY_INIT,
 			s_steps, sizeof(s_steps)/sizeof(*s_steps), 0,
-			{ s_txBuffer, sizeof(s_txBuffer), 0 },
+			{ s_RequestTxBuffer, sizeof(s_RequestTxBuffer), 0 },
 			{ NULL }
 	};
 
@@ -71,7 +67,6 @@ static _Bool listAccessPoints (Request_p req) {
 	return true;
 }
 static _Bool parseAccessPointsList (Request_p req) {
-	DBGMSG_M("[APS]\n\r%s", req->rx.buff);
 	systemConfig_p config = SystemConfig_get();
 	Parse_APN(req->rx.buff, req->rx.occupied, &config->discoveredApns, &config->discoveredApnsSize);
 	if (config->discoveredApnsSize) {
@@ -81,6 +76,8 @@ static _Bool parseAccessPointsList (Request_p req) {
 			DBGMSG_L("%d: [%s] chn %d rssi %d", i, config->discoveredApns[i].ssid,
 					config->discoveredApns[i].channel, config->discoveredApns[i].rssi);
 		}
+	} else {
+		DBGMSG_H("No APN's Found");
 	}
 	return true;
 }
