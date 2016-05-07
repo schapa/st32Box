@@ -13,12 +13,9 @@
 #include <stdbool.h>
 
 typedef enum {
-	STEP_INIT,
-	STEP_WAITING,
-	STEP_ENDED,
-	STEP_FAILED,
-	STEP_LAST
-} StepState_t;
+	STEP_FLAG_WAIT_TOUT = (1<<0),
+	STEP_FLAG_ALL = ~0
+} StepFlags_t;
 
 typedef enum {
 	QUERY_INIT,
@@ -35,13 +32,12 @@ typedef struct {
 	_Bool (*start) (Request_p req);
 	_Bool (*success) (Request_p req);
 	_Bool (*fail) (Request_p req);
-	StepState_t state;
+	StepFlags_t falgs;
 	uint32_t timeout;
 	const char *acknowledge; /* Success acknowledge string. if Null - "OK" */
 } Step_t, *Step_p;
 
 struct RequestNode {
-	uint32_t handle;
 	QueryState_t state;
 	Step_p steps;
 	size_t stepsCount;
@@ -53,7 +49,5 @@ struct RequestNode {
 	} tx, rx;
 
 };
-
-void QueryProcess(Request_p req);
 
 #endif /* QUERY_H_ */

@@ -19,7 +19,7 @@
 #include "pwmWrapper.h"
 #include "USB_Generic.h"
 #include "dbg_base.h"
-#include "QueryEngine.h"
+#include "Engine.h"
 
 #if 0
 #include "dbg_trace.h"
@@ -28,6 +28,7 @@
 static void initGPIO_LED(void);
 
 static USART_HandleTypeDef s_traceUsart;
+static UART_HandleTypeDef s_espUart;
 static DMA_HandleTypeDef s_traceTxDma;
 static CAN_HandleTypeDef s_can1Bus;
 
@@ -39,8 +40,9 @@ void BSP_init(void) {
 	HAL_StatusTypeDef initResult = HAL_OK;
 	initGPIO_LED();
 
-	initResult &= Trace_InitUSART1(pTraceUsart, pTraceTxDma);
-	initResult &= CAN_init(pCan1Bus);
+	initResult |= Trace_InitUSART1(pTraceUsart, pTraceTxDma);
+	initResult |= UART4_Init(&s_espUart, 115200);
+	initResult |= CAN_init(pCan1Bus);
 
 	HELP_printMessage();
 	HELP_dumpUsartProps(pTraceUsart);
@@ -66,6 +68,10 @@ void BSP_queuePush(Event_p pEvent) {
 	SystemEvent *evt = Q_NEW(SystemEvent, SYSTEM_SIG);
 	evt->event = *pEvent;
     QACTIVE_POST(AO_system(), evt, NULL);
+}
+
+void BSP_espSend(const char *buff, size_t size) {
+	HAL_UART_Transmit_IT(&s_espUart, buff, size);
 }
 
 void Led_Red_SetState(FunctionalState state) {

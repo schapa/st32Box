@@ -130,59 +130,29 @@ static _Bool getRootAck (Request_p req) {
 
 
 static Step_t steps[] = {
-	{ startRestartModule, 			NULL, 				NULL, STEP_INIT, 0, "ready" },
-	{ startEchoOff, 				NULL, 				NULL, STEP_INIT, 0, NULL },
-	{ startModeChange, 				NULL, 				NULL, STEP_INIT, 0, NULL },
-	{ listAccessPoints, 			listAccessPointsOk, NULL, STEP_INIT, 0, NULL },
-	{ startConnect, 				NULL, 				NULL, STEP_INIT, 0, NULL },
-	{ getMyAdress, 					getMyAdressOk, 		NULL, STEP_INIT, 0, NULL },
-	{ setMultipleMode, 				NULL, 				NULL, STEP_INIT, 0, NULL },
-	{ openUpdBroadcast, 			NULL, 				NULL, STEP_INIT, 0, NULL },
-	{ prepareToSend, 				NULL, 				NULL, STEP_INIT, 0, "> " },
-	{ sendUPnPDiscover, 			NULL, 				NULL, STEP_INIT, 0, "SEND OK" },
-	{ NULL, 						uPnPDiscoverAck, 	NULL, STEP_INIT, 0, NULL },
-	{ closeUpdBroadcast, 			NULL, 				NULL, STEP_INIT, 0, NULL },
-	{ openTCP, 						NULL, 				NULL, STEP_INIT, 0, NULL },
-	{ prepareRoot, 					NULL, 				NULL, STEP_INIT, 0, NULL },
-	{ getRootDsc,		 			getRootAck, 		NULL, STEP_INIT, 0, "0,CLOSED" },
+	{ startRestartModule, 			NULL, 				NULL, 0, 0, "ready" },
+	{ startEchoOff, 				NULL, 				NULL, 0, 0, NULL },
+	{ startModeChange, 				NULL, 				NULL, 0, 0, NULL },
+	{ listAccessPoints, 			listAccessPointsOk, NULL, 0, 0, NULL },
+	{ startConnect, 				NULL, 				NULL, 0, 0, NULL },
+	{ getMyAdress, 					getMyAdressOk, 		NULL, 0, 0, NULL },
+	{ setMultipleMode, 				NULL, 				NULL, 0, 0, NULL },
+	{ openUpdBroadcast, 			NULL, 				NULL, 0, 0, NULL },
+	{ prepareToSend, 				NULL, 				NULL, 0, 0, "> " },
+	{ sendUPnPDiscover, 			NULL, 				NULL, 0, 0, "SEND OK" },
+	{ NULL, 						uPnPDiscoverAck, 	NULL, STEP_FLAG_WAIT_TOUT, 1*BSP_TICKS_PER_SECOND, NULL },
+	{ closeUpdBroadcast, 			NULL, 				NULL, 0, 0, NULL },
+	{ openTCP, 						NULL, 				NULL, 0, 0, NULL },
+	{ prepareRoot, 					NULL, 				NULL, 0, 0, NULL },
+	{ getRootDsc,		 			getRootAck, 		NULL, 0, 0, "0,CLOSED" },
 };
 
 static char queryBuffer[1024];
 static UART_HandleTypeDef s_uart;
 
 Request_t testReq = {
-		0, QUERY_INIT,
+		QUERY_INIT,
 		steps, sizeof(steps)/sizeof(*steps), 0,
 		{ queryBuffer, sizeof(queryBuffer), 0 }
 };
 
-
-void QueryTest(uint8_t *buff, size_t size) {
-
-	static _Bool init;
-	if (!init) {
-		UART4_Init(&s_uart, 115200);
-		HELP_dumpUartProps(&s_uart);
-		init = true;
-	}
-	if ((testReq.state != QUERY_FAILED) && (testReq.state != QUERY_DONE)) {
-		if (buff && size) {
-			char *start = MEMMAN_malloc(testReq.rx.occupied + size + 3);
-			memset((void*)start, 0, testReq.rx.occupied + size + 3);
-			char *ptr = start;
-			if (testReq.rx.occupied) {
-				memcpy((void*)start, (void*)testReq.rx.buff, testReq.rx.occupied);
-				MEMMAN_free((void*)testReq.rx.buff);
-				start[testReq.rx.occupied++] = '\n';
-				start[testReq.rx.occupied++] = '\r';
-				ptr = &start[testReq.rx.occupied];
-			}
-			memcpy((void*)ptr, (void*)buff, size);
-			testReq.rx.buff = start;
-			testReq.rx.occupied += size;
-			start[testReq.rx.occupied] = '\0';
-		}
-		QueryProcess(&testReq);
-		HAL_UART_Transmit_IT(&s_uart, (uint8_t*)testReq.tx.buff, testReq.tx.occupied);
-	}
-}

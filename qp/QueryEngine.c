@@ -14,70 +14,78 @@
 * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 * for more details.
 *****************************************************************************/
-/*${QueryEng::.::QueryEngine.c} ............................................*/
-#include "qp_port.h"
+/*${System::.::QueryEngine.c} ..............................................*/
+
 #include "QueryEngine.h"
 #include <stdint.h>
+#include <string.h>
+#include "memman.h"
 #include "bsp.h"
 #include "dbg_base.h"
 #if 01
 #include "dbg_trace.h"
 #endif
 
-static void HandleSysEvt(SystemEvent *evt);
+static QueryEngine s_queryEng;
+static QActive * s_pQueryEng = NULL;
 
-static QueryEngine s_engine;
-static QActive * s_pEngine = NULL;
+static void handleNewBuffer(Request_p req, SystemEvent *evt);
+static _Bool isStepAck(Request_p req, _Bool *isOk);
 
-QActive * AO_system(void) {
-    if (!s_pEngine) {
-        QueryEngine_ctor(&s_engine);
-        s_pEngine = &s_engine;
+QActive * AO_QueryEngine(void) {
+    if (!s_pQueryEng) {
+        QueryEngine_ctor(&s_queryEng);
+        s_pQueryEng = (QActive*)&s_queryEng;
     }
-    return s_pEngine;
+    return s_pQueryEng;
 }
 
-/*${QueryEng::QueryEngine} .................................................*/
-/*${QueryEng::QueryEngine::ctor} ...........................................*/
+/*${System::QueryEngine} ...................................................*/
+/*${System::QueryEngine::ctor} .............................................*/
 void QueryEngine_ctor(QueryEngine * const me) {
     DBGMSG_M("Create");
     QActive_ctor(&me->super, Q_STATE_CAST(&QueryEngine_initial));
-    QTimeEvt_ctorX(&me->timeEvt, &me->super, TIMEOUT_SIG, 0U);
+    QTimeEvt_ctorX(&me->stepTout, &me->super, STEP_TIMEOUT_SIG, 0U);
+    QTimeEvt_ctorX(&me->queryTout, &me->super, QUERY_TIMEOUT_SIG, 0U);
+    me->request = NULL;
 }
-/*${QueryEng::QueryEngine::SM} .............................................*/
+/*${System::QueryEngine::SM} ...............................................*/
 QState QueryEngine_initial(QueryEngine * const me, QEvt const * const e) {
-    /* ${QueryEng::QueryEngine::SM::initial} */
+    /* ${System::QueryEngine::SM::initial} */
     (void)e;
-    QTimeEvt_armX(&me->timeEvt, BSP_TICKS_PER_SECOND/2U, BSP_TICKS_PER_SECOND/2U);
-    return Q_TRAN(&QueryEngine_Init);
+    return Q_TRAN(&QueryEngine_Idle);
 }
-/*${QueryEng::QueryEngine::SM::Working} ....................................*/
-QState QueryEngine_Working(QueryEngine * const me, QEvt const * const e) {
+/*${System::QueryEngine::SM::Idle} .........................................*/
+QState QueryEngine_Idle(QueryEngine * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${QueryEng::QueryEngine::SM::Working} */
+        /* ${System::QueryEngine::SM::Idle} */
         case Q_ENTRY_SIG: {
-            DBGMSG_M("Q_ENTRY");
-            //QTimeEvt_armX(&me->timeEvt, BSP_TICKS_PER_SECOND/2U, BSP_TICKS_PER_SECOND/2U);
+            DBGMSG_M("Entry");
             status_ = Q_HANDLED();
             break;
         }
-        /* ${QueryEng::QueryEngine::SM::Working} */
+        /* ${System::QueryEngine::SM::Idle} */
         case Q_EXIT_SIG: {
-            DBGMSG_M("Q_EXIT");
+            DBGMSG_M("Exit");
             status_ = Q_HANDLED();
             break;
         }
-        /* ${QueryEng::QueryEngine::SM::Working::SYSTEM} */
-        case SYSTEM_SIG: {
-            DBGMSG_M("SYS");
-            HandleSysEvt(e);
+        /* ${System::QueryEngine::SM::Idle::NEW_REQUEST} */
+        case NEW_REQUEST_SIG: {
+            RequestEvent *evt = (RequestEvent*)e;
+            me->request = evt->request;
+            status_ = Q_TRAN(&QueryEngine_StepInit);
+            break;
+        }
+        /* ${System::QueryEngine::SM::Idle::QUERY_TIMEOUT} */
+        case QUERY_TIMEOUT_SIG: {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${QueryEng::QueryEngine::SM::Working::TIMEOUT} */
-        case TIMEOUT_SIG: {
-            status_ = Q_TRAN(&QueryEngine_Init);
+        /* ${System::QueryEngine::SM::Idle::STEP_TIMEOUT} */
+        case STEP_TIMEOUT_SIG: {
+            status_ = Q_HANDLED();
             break;
         }
         default: {
@@ -87,117 +95,229 @@ QState QueryEngine_Working(QueryEngine * const me, QEvt const * const e) {
     }
     return status_;
 }
-/*${QueryEng::QueryEngine::SM::Working::Init} ..............................*/
-QState QueryEngine_Init(QueryEngine * const me, QEvt const * const e) {
+/*${System::QueryEngine::SM::Working} ......................................*/
+QState QueryEngine_Working(QueryEngine * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${QueryEng::QueryEngine::SM::Working::Init::TIMEOUT} */
-        case TIMEOUT_SIG: {
-            status_ = Q_TRAN(&QueryEngine_Processing);
+        /* ${System::QueryEngine::SM::Working} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::QueryEngine::SM::Working} */
+        case Q_EXIT_SIG: {
+            DBGMSG_M("Exit");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::QueryEngine::SM::Working::STEP_FAILED} */
+        case STEP_FAILED_SIG: {
+            DBGMSG_M("STEP_FAILED");
+            status_ = Q_TRAN(&QueryEngine_StepFailed);
+            break;
+        }
+        /* ${System::QueryEngine::SM::Working::QUERY_DONE} */
+        case QUERY_DONE_SIG: {
+            DBGMSG_M("QUERY_DONE_SIG");
+            me->request->state = QUERY_DONE;
+            status_ = Q_TRAN(&QueryEngine_Idle);
             break;
         }
         default: {
-            status_ = Q_SUPER(&QueryEngine_Working);
+            status_ = Q_SUPER(&QHsm_top);
             break;
         }
     }
     return status_;
 }
-/*${QueryEng::QueryEngine::SM::Working::Processing} ........................*/
-QState QueryEngine_Processing(QueryEngine * const me, QEvt const * const e) {
+/*${System::QueryEngine::SM::Working::StepInit} ............................*/
+QState QueryEngine_StepInit(QueryEngine * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${QueryEng::QueryEngine::SM::Working::Processing::TIMEOUT} */
-        case TIMEOUT_SIG: {
-            status_ = Q_TRAN(&QueryEngine_Waiting);
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&QueryEngine_Working);
-            break;
-        }
-    }
-    return status_;
-}
-/*${QueryEng::QueryEngine::SM::Working::Waiting} ...........................*/
-QState QueryEngine_Waiting(QueryEngine * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${QueryEng::QueryEngine::SM::Working::Waiting::TIMEOUT} */
-        case TIMEOUT_SIG: {
-            status_ = Q_TRAN(&QueryEngine_Done);
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&QueryEngine_Working);
-            break;
-        }
-    }
-    return status_;
-}
-/*${QueryEng::QueryEngine::SM::Working::Done} ..............................*/
-QState QueryEngine_Done(QueryEngine * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        default: {
-            status_ = Q_SUPER(&QueryEngine_Working);
-            break;
-        }
-    }
-    return status_;
-}
-
-
-static void HandleSysEvt(SystemEvent *evt) {
-
-    extern void QueryTest(uint8_t *buff, size_t size);
-    QueryTest(NULL, 0);
-
-    Event_p event = &evt->event;
-    switch (event->type) {
-        case EVENT_EXTI: {
-            DBGMSG_L("[Exti] pin %d act %d", event->data, event->subType.exti);
-            char *text = "hello !";
-            CanTxMsgTypeDef txMsg = {
-                    0x22, 0,
-                    CAN_ID_STD,
-                    CAN_RTR_DATA,
-                    8,
-                    { text[0], text[1], text[2], text[3], text[4], text[5], text[6], text[7] }
-            };
-            USB_ACM_write((uint8_t*)text, strlen(text));
-            CAN_write(&txMsg);
-            } break;
-        case EVENT_UART:
-            UART_handleEvent(event);
-            break;
-        case EVENT_UxART_Buffer: {
-            uint8_t *buff = (uint8_t *)event->data.uxart.buffer;
-            size_t size = event->data.uxart.size;
-            switch (event->subType.uxart) {
-                case ES_UxART_RX:
-                    DBGMSG_H("[RX] [%s]", buff);
-                    QueryTest(buff, size);
-                    MEMMAN_free(buff);
-                    break;
-                default:
-                    break;
+        /* ${System::QueryEngine::SM::Working::StepInit} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            if (me->request->stepCurrent < me->request->stepsCount) {
+                _Bool continueStepping = true;
+                Step_p step = step = &(me->request->steps[me->request->stepCurrent]);
+                me->request->state = QUERY_PROCESSING;
+                if (step->start) {
+                    continueStepping = step->start(me->request);
+                    me->request->state = QUERY_WAITING;
+                    DBGMSG_M("Starting: %u\n\r%s", me->request->stepCurrent, me->request->tx.buff);
+                }
+                QACTIVE_POST(AO_QueryEngine(), Q_NEW(QEvt, continueStepping ? STEP_NEXT_SIG : STEP_FAILED_SIG), NULL);
+            } else {
+                QACTIVE_POST(AO_QueryEngine(), Q_NEW(QEvt, QUERY_DONE_SIG), NULL);
             }
-        } break;
-        case EVENT_CAN:
-            CAN_handleEvent(event);
+            status_ = Q_HANDLED();
             break;
-        case EVENT_SYSTICK:
-            if (event->subType.systick == ES_SYSTICK_SECOND_ELAPSED) {
-                Timer_makeTick();
-            }
-        case EVENT_USART:
-            USART_handleEvent(event);
+        }
+        /* ${System::QueryEngine::SM::Working::StepInit} */
+        case Q_EXIT_SIG: {
+            DBGMSG_M("Exit");
+            status_ = Q_HANDLED();
             break;
-        case EVENT_DUMMY:
+        }
+        /* ${System::QueryEngine::SM::Working::StepInit::STEP_NEXT} */
+        case STEP_NEXT_SIG: {
+            DBGMSG_M("STEP_NEXT");
+            status_ = Q_TRAN(&QueryEngine_StepWaiting);
             break;
-        default:
-            DBGMSG_WARN("Unhandled Event type %p data %p!", event->type, event->data);
+        }
+        default: {
+            status_ = Q_SUPER(&QueryEngine_Working);
             break;
+        }
     }
+    return status_;
+}
+/*${System::QueryEngine::SM::Working::StepWaiting} .........................*/
+QState QueryEngine_StepWaiting(QueryEngine * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${System::QueryEngine::SM::Working::StepWaiting} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            BSP_espSend(me->request->tx.buff, me->request->tx.occupied);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_TIMEOUT} */
+        case NEW_DATA_SIG: /* intentionally fall through */
+        case STEP_TIMEOUT_SIG: {
+            DBGMSG_H("%s", e->sig == NEW_DATA_SIG ? "NEW_DATA_SIG" : "STEP_TIMEOUT_SIG" );
+            Step_p step = &(me->request->steps[me->request->stepCurrent]);
+            _Bool ackOk = false;
+            if (e->sig == NEW_DATA_SIG) {
+                handleNewBuffer(me->request, (SystemEvent*)e);
+            }
+            /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_T~::[ack?]} */
+            if (isStepAck(me->request, &ackOk)) {
+                DBGMSG_M("Got Ack");
+                /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_T~::[ack?]::[OK]} */
+                if (ackOk) {
+                    /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_T~::[ack?]::[OK]::[Wait]} */
+                    if ((e->sig == NEW_DATA_SIG) && (step->falgs & STEP_FLAG_WAIT_TOUT)) {
+                        if (!me->stepTout.ctr) {
+                            DBGMSG_H("Waiting for %u ticks", step->timeout);
+                            QTimeEvt_armX(&me->stepTout, step->timeout, 0U);
+                        }
+                        status_ = Q_HANDLED();
+                    }
+                    /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_T~::[ack?]::[OK]::[else]} */
+                    else {
+                        DBGMSG_H("Successed: %u", me->request->stepCurrent);
+                        if (step->success) {
+                            step->success(me->request);
+                        }
+                        MEMMAN_free(me->request->rx.buff);
+                        me->request->rx.occupied = 0;
+                        me->request->tx.occupied = 0;
+                        me->request->stepCurrent++;
+                        status_ = Q_TRAN(&QueryEngine_StepInit);
+                    }
+                }
+                /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_T~::[ack?]::[err]} */
+                else {
+                    DBGMSG_H("Fail: %u\n\r%s", me->request->stepCurrent, me->request->tx.buff);
+
+                    status_ = Q_TRAN(&QueryEngine_StepFailed);
+                }
+            }
+            else {
+                status_ = Q_UNHANDLED();
+            }
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&QueryEngine_Working);
+            break;
+        }
+    }
+    return status_;
+}
+/*${System::QueryEngine::SM::Working::StepFailed} ..........................*/
+QState QueryEngine_StepFailed(QueryEngine * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${System::QueryEngine::SM::Working::StepFailed} */
+        case Q_ENTRY_SIG: {
+            Step_p step = step = &(me->request->steps[me->request->stepCurrent]);
+            DBGMSG_H("Failed step %d", me->request->stepCurrent);
+            me->request->state = QUERY_FAILED;
+            if (step->fail) {
+                step->fail(me->request);
+            }
+            QACTIVE_POST(AO_QueryEngine(), Q_NEW(QEvt, STEP_FAILED_SIG), NULL);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::QueryEngine::SM::Working::StepFailed::STEP_FAILED} */
+        case STEP_FAILED_SIG: {
+            DBGMSG_M("STEP_FAILED");
+            status_ = Q_TRAN(&QueryEngine_Idle);
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&QueryEngine_Working);
+            break;
+        }
+    }
+    return status_;
+}
+
+
+static void handleNewBuffer(Request_p req, SystemEvent *evt) {
+    char *buff = (char*)evt->event.data.uxart.buffer;
+    size_t size = evt->event.data.uxart.size;
+    if (buff && size) {
+        char *start = MEMMAN_malloc(req->rx.occupied + size + 3);
+        memset((void*)start, 0, req->rx.occupied + size + 3);
+        char *ptr = start;
+        if (req->rx.occupied) {
+            memcpy((void*)start, (void*)req->rx.buff, req->rx.occupied);
+            MEMMAN_free((void*)req->rx.buff);
+            start[req->rx.occupied++] = '\n';
+            start[req->rx.occupied++] = '\r';
+            ptr = &start[req->rx.occupied];
+        }
+        memcpy((void*)ptr, (void*)buff, size);
+        req->rx.buff = start;
+        req->rx.occupied += size;
+        start[req->rx.occupied] = '\0';
+    }
+}
+
+static _Bool isStepAck(Request_p req, _Bool *isOk) {
+    _Bool result = false;
+    static const char *const ackError = "ERROR";
+    const size_t ackErrorSize = strlen(ackError);
+    do {
+        if (!req || !isOk || !req->rx.occupied)
+            break;
+        const char *const ackOk = req->steps[req->stepCurrent].acknowledge ? req->steps[req->stepCurrent].acknowledge : "OK";
+        const size_t ackOkSize = strlen(ackOk);
+        *isOk = false;
+        if (req->rx.occupied >= ackErrorSize) {
+            char *ptr = (char*)&req->rx.buff[req->rx.occupied - ackErrorSize];
+            if (!strcmp(ptr, ackError)) {
+                result = true;
+                break;
+            }
+        }
+        if (req->rx.occupied >= ackOkSize) {
+            char *ptr = (char*)&req->rx.buff[req->rx.occupied - ackOkSize];
+            if (!strcmp(ptr, ackOk)) {
+                if ((req->rx.occupied <= ackOkSize) || (*(ptr - 1) == '\r')) {
+                    *isOk = true;
+                    result = true;
+                    break;
+                }
+            }
+        }
+
+    } while (0);
+    return result;
 }

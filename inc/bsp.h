@@ -17,6 +17,8 @@ void BSP_init(void);
 
 void BSP_queuePush(Event_p pEvent);
 
+void BSP_espSend(const char *buff, size_t size);
+
 void Led_Red_SetState(FunctionalState state);
 void Led_Green_SetState(FunctionalState state);
 

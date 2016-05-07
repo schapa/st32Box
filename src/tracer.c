@@ -105,7 +105,12 @@ _Bool Trace_onTxComplete(USART_HandleTypeDef *handle) {
 
 int trace_write_usart_blocking(const char *buf, size_t nbyte) {
 	if (s_tracerHandle) {
+		HAL_USART_DMAPause(s_tracerHandle);
+		HAL_USART_StateTypeDef state = HAL_USART_GetState(s_tracerHandle);
+		s_tracerHandle->State = HAL_USART_STATE_READY;
 		HAL_USART_Transmit(s_tracerHandle, (uint8_t*)buf, nbyte, 0xFF);
+		s_tracerHandle->State = state;
+		HAL_USART_DMAResume(s_tracerHandle);
 	}
 	return nbyte;
 }

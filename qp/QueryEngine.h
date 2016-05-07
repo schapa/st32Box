@@ -14,41 +14,24 @@
 * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 * for more details.
 *****************************************************************************/
-/*${QueryEng::.::QueryEngine.h} ............................................*/
+/*${System::.::QueryEngine.h} ..............................................*/
 #pragma once
 
-#include "qp_port.h"
-#include "Events.h"
+#include "Engine.h"
+#include "Query.h"
 
-enum BlinkySignals {
-    DUMMY_SIG = Q_USER_SIG,
-    SYSTEM_SIG,
-    TIMEOUT_SIG,
-    MAX_SIG               /* the last signal */
-};
+QActive *AO_QueryEngine(void);
 
-QActive *AO_system(void);
-
-/*${QueryEng::SystemEvent} .................................................*/
-typedef struct {
-/* protected: */
-    QEvt super;
-
-/* public: */
-    Event_t event;
-} SystemEvent;
-
-
-/*${QueryEng::QueryEngine} .................................................*/
+/*${System::QueryEngine} ...................................................*/
 typedef struct {
 /* protected: */
     QActive super;
 
-/* public: */
-    QTimeEvt timeEvt;
-
 /* private: */
     QEvt const * evtStorage[128];
+    QTimeEvt stepTout;
+    QTimeEvt queryTout;
+    Request_p request;
 } QueryEngine;
 
 /* public: */
@@ -56,9 +39,9 @@ void QueryEngine_ctor(QueryEngine * const me);
 
 /* protected: */
 QState QueryEngine_initial(QueryEngine * const me, QEvt const * const e);
+QState QueryEngine_Idle(QueryEngine * const me, QEvt const * const e);
 QState QueryEngine_Working(QueryEngine * const me, QEvt const * const e);
-QState QueryEngine_Init(QueryEngine * const me, QEvt const * const e);
-QState QueryEngine_Processing(QueryEngine * const me, QEvt const * const e);
-QState QueryEngine_Waiting(QueryEngine * const me, QEvt const * const e);
-QState QueryEngine_Done(QueryEngine * const me, QEvt const * const e);
+QState QueryEngine_StepInit(QueryEngine * const me, QEvt const * const e);
+QState QueryEngine_StepWaiting(QueryEngine * const me, QEvt const * const e);
+QState QueryEngine_StepFailed(QueryEngine * const me, QEvt const * const e);
 
