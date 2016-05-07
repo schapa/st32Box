@@ -121,6 +121,8 @@ QState QueryEngine_Working(QueryEngine * const me, QEvt const * const e) {
         case QUERY_DONE_SIG: {
             DBGMSG_M("QUERY_DONE_SIG");
             me->request->state = QUERY_DONE;
+            QACTIVE_POST(AO_system(), Q_NEW(QEvt, QUERY_DONE_SIG), NULL);
+
             status_ = Q_TRAN(&QueryEngine_Idle);
             break;
         }

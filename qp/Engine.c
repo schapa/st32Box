@@ -19,6 +19,7 @@
 #include "Engine.h"
 #include "QueryEngine.h"
 #include <stdint.h>
+#include "requests.h"
 #include "bsp.h"
 #include "dbg_base.h"
 #if 01
@@ -93,9 +94,8 @@ QState Engine_Init(Engine * const me, QEvt const * const e) {
         /* ${System::Engine::SM::Working::Init} */
         case Q_ENTRY_SIG: {
             DBGMSG_M("Entry");
-            extern Request_t testReq;
             RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
-            evt->request = &testReq;
+            evt->request = Request_GetInitial();
             QACTIVE_POST(AO_QueryEngine(), evt, NULL);
             status_ = Q_HANDLED();
             break;
@@ -106,8 +106,8 @@ QState Engine_Init(Engine * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${System::Engine::SM::Working::Init::TIMEOUT} */
-        case TIMEOUT_SIG: {
+        /* ${System::Engine::SM::Working::Init::QUERY_DONE} */
+        case QUERY_DONE_SIG: {
             status_ = Q_TRAN(&Engine_Processing);
             break;
         }
@@ -122,6 +122,12 @@ QState Engine_Init(Engine * const me, QEvt const * const e) {
 QState Engine_Processing(Engine * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
+        /* ${System::Engine::SM::Working::Processing} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            status_ = Q_HANDLED();
+            break;
+        }
         /* ${System::Engine::SM::Working::Processing::TIMEOUT} */
         case TIMEOUT_SIG: {
             status_ = Q_TRAN(&Engine_Waiting);
@@ -138,6 +144,12 @@ QState Engine_Processing(Engine * const me, QEvt const * const e) {
 QState Engine_Waiting(Engine * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
+        /* ${System::Engine::SM::Working::Waiting} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            status_ = Q_HANDLED();
+            break;
+        }
         /* ${System::Engine::SM::Working::Waiting::TIMEOUT} */
         case TIMEOUT_SIG: {
             status_ = Q_TRAN(&Engine_Done);
@@ -154,6 +166,12 @@ QState Engine_Waiting(Engine * const me, QEvt const * const e) {
 QState Engine_Done(Engine * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
+        /* ${System::Engine::SM::Working::Done} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            status_ = Q_HANDLED();
+            break;
+        }
         default: {
             status_ = Q_SUPER(&Engine_Working);
             break;

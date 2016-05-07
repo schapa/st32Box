@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define CRLF "\r\n"
+
 typedef enum {
 	STEP_FLAG_WAIT_TOUT = (1<<0),
 	STEP_FLAG_ALL = ~0

@@ -34,12 +34,11 @@ QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
      </tran>
      <state name="Init">
       <entry>DBGMSG_M(&quot;Entry&quot;);
-extern Request_t testReq;
 RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
-evt-&gt;request = &amp;testReq;
+evt-&gt;request = Request_GetInitial();
 QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-      <tran trig="TIMEOUT" target="../../3">
+      <tran trig="QUERY_DONE" target="../../3">
        <tran_glyph conn="31,16,1,3,6">
         <action box="0,-2,10,2"/>
        </tran_glyph>
@@ -50,23 +49,32 @@ QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
       </state_glyph>
      </state>
      <state name="Processing">
+      <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
       <tran trig="TIMEOUT" target="../../4">
        <tran_glyph conn="58,16,1,3,6">
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="37,9,21,19"/>
+      <state_glyph node="37,9,21,19">
+       <entry box="1,2,6,2"/>
+      </state_glyph>
      </state>
      <state name="Waiting">
+      <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
       <tran trig="TIMEOUT" target="../../5">
        <tran_glyph conn="75,28,2,1,11,-17">
         <action box="-10,9,10,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="64,9,21,19"/>
+      <state_glyph node="64,9,21,19">
+       <entry box="1,2,6,2"/>
+      </state_glyph>
      </state>
      <state name="Done">
-      <state_glyph node="37,35,21,19"/>
+      <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
+      <state_glyph node="37,35,21,19">
+       <entry box="1,2,6,2"/>
+      </state_glyph>
      </state>
      <state_glyph node="4,5,84,55">
       <entry box="1,2,6,2"/>
@@ -134,7 +142,9 @@ me-&gt;request = evt-&gt;request;</action>
      </tran>
      <tran trig="QUERY_DONE" target="../../1">
       <action>DBGMSG_M(&quot;QUERY_DONE_SIG&quot;);
-me-&gt;request-&gt;state = QUERY_DONE;</action>
+me-&gt;request-&gt;state = QUERY_DONE;
+QACTIVE_POST(AO_system(), Q_NEW(QEvt, QUERY_DONE_SIG), NULL);
+</action>
       <tran_glyph conn="30,17,3,1,-10">
        <action box="-8,-2,10,2"/>
       </tran_glyph>
@@ -293,6 +303,7 @@ $declare(System::Engine)</text>
 #include &quot;Engine.h&quot;
 #include &quot;QueryEngine.h&quot;
 #include &lt;stdint.h&gt;
+#include &quot;requests.h&quot;
 #include &quot;bsp.h&quot;
 #include &quot;dbg_base.h&quot;
 #if 01

@@ -18,8 +18,6 @@
 #include "dbg_trace.h"
 #endif
 
-#define CRLF "\r\n"
-
 typedef struct {
 	const char *ssid;
 	const char *passwd;
