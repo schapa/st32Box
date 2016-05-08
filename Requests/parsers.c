@@ -216,7 +216,6 @@ _Bool Parse_UPnP(const char *buffer, size_t size, uint8_t *pIp, uint16_t *pPort,
 	return result;
 }
 
-#include "dbg_trace.h"
 _Bool Parse_RootXML(const char *buffer, size_t size, char *url) {
 	_Bool result = false;
 	static const char *ipdGarbage = "+IPD,";
@@ -265,6 +264,29 @@ _Bool Parse_RootXML(const char *buffer, size_t size, char *url) {
 		}
 		*url = '\0';
 		result = true;
+	} while (0);
+
+    DBGMSG_M("%s", result ? "Ok" : "Fail");
+	return result;
+}
+
+#include "dbg_trace.h"
+_Bool Parse_ConnectionStatus(const char *buffer, size_t size, _Bool *isOk) {
+	_Bool result = false;
+	static const char *tag = "<NewConnectionStatus>";
+	static const char *state = "Connected";
+
+	do {
+		if (!buffer || !size || !isOk) {
+		    DBGMSG_ERR("Invalid input");
+		    break;
+		}
+		char *ptr = strstr((char*)buffer, tag);
+		if (ptr) {
+			*isOk = !!strstr(ptr, state);
+			result = true;
+		}
+	    DBGMSG_H("%s", *isOk ? state : "Not connected");
 	} while (0);
 
     DBGMSG_M("%s", result ? "Ok" : "Fail");

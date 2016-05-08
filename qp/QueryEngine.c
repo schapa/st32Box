@@ -198,12 +198,12 @@ QState QueryEngine_StepWaiting(QueryEngine * const me, QEvt const * const e) {
         /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, NEW_DATA_TOUT} */
         case NEW_DATA_SIG: /* intentionally fall through */
         case NEW_DATA_TOUT_SIG: {
-            DBGMSG_H("%s", e->sig == NEW_DATA_SIG ? "NEW_DATA_SIG" : "STEP_TIMEOUT_SIG" );
+            DBGMSG_H("%s", e->sig == NEW_DATA_SIG ? "NEW_DATA_SIG" : "STEP_TIMEOUT_SIG");
             Step_p step = &(me->request->steps[me->request->stepCurrent]);
             _Bool ackOk = false;
-            if (e->sig == NEW_DATA_SIG) {
-            //    DBGMSG_H("\r\n%s", me->request->rx.buff);
+            if ((e->sig == NEW_DATA_SIG)) {
                 handleNewBuffer(me->request, (SystemEvent*)e);
+            //    DBGMSG_H("\r\n%s", me->request->rx.buff);
             }
             /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, NEW_DA~::[ack?]} */
             if (isStepAck(me->request, &ackOk)) {
@@ -291,14 +291,14 @@ static void handleNewBuffer(Request_p req, SystemEvent *evt) {
     char *buff = (char*)evt->event.data.uxart.buffer;
     size_t size = evt->event.data.uxart.size;
     if (buff && size) {
-        char *start = MEMMAN_malloc(req->rx.occupied + size + 3);
-        memset((void*)start, 0, req->rx.occupied + size + 3);
+//        DBGMSG_H("\r\n[%s]", buff);
+        size_t sizeNew = req->rx.occupied + size + 1;
+        char *start = MEMMAN_malloc(sizeNew);
+        memset((void*)start, 0, sizeNew);
         char *ptr = start;
         if (req->rx.occupied) {
             memcpy((void*)start, (void*)req->rx.buff, req->rx.occupied);
             MEMMAN_free((void*)req->rx.buff);
-            start[req->rx.occupied++] = '\n';
-            start[req->rx.occupied++] = '\r';
             ptr = &start[req->rx.occupied];
         }
         memcpy((void*)ptr, (void*)buff, size);
@@ -327,8 +327,10 @@ static _Bool isStepAck(Request_p req, _Bool *isOk) {
         }
         if (req->rx.occupied >= ackOkSize) {
             char *ptr = (char*)&req->rx.buff[req->rx.occupied - ackOkSize];
-            if (!strcmp(ptr, ackOk)) {
-                if ((req->rx.occupied <= ackOkSize) || (*(ptr - 1) == '\r')) {
+            if (Char_isTerminal(req->rx.buff[req->rx.occupied-1]))
+                ptr--;
+            if (strstr(ptr, ackOk)) {
+                if ((req->rx.occupied <= ackOkSize) || Char_isTerminal(*(ptr - 1))) {
                     *isOk = true;
                     result = true;
                     break;

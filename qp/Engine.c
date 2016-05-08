@@ -171,7 +171,7 @@ QState Engine_Connect(Engine * const me, QEvt const * const e) {
         }
         /* ${System::Engine::SM::Working::Connect::QUERY_DONE} */
         case QUERY_DONE_SIG: {
-            status_ = Q_TRAN(&Engine_UPnP);
+            status_ = Q_TRAN(&Engine_UPnPDiscoverer);
             break;
         }
         default: {
@@ -195,11 +195,6 @@ QState Engine_UPnP(Engine * const me, QEvt const * const e) {
         case Q_EXIT_SIG: {
             DBGMSG_M("Exit");
             status_ = Q_HANDLED();
-            break;
-        }
-        /* ${System::Engine::SM::Working::UPnP::initial} */
-        case Q_INIT_SIG: {
-            status_ = Q_TRAN(&Engine_UPnPDiscoverer);
             break;
         }
         default: {
@@ -257,7 +252,7 @@ QState Engine_CheckConnection(Engine * const me, QEvt const * const e) {
         case Q_ENTRY_SIG: {
             DBGMSG_M("Entry");
             RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
-            evt->request = Request_GetRootXml();
+            evt->request = Request_GetCheckConnection();
             QACTIVE_POST(AO_QueryEngine(), evt, NULL);
             status_ = Q_HANDLED();
             break;
@@ -287,6 +282,9 @@ QState Engine_GetExtIP(Engine * const me, QEvt const * const e) {
         /* ${System::Engine::SM::Working::UPnP::GetExtIP} */
         case Q_ENTRY_SIG: {
             DBGMSG_M("Entry");
+            RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+            evt->request = Request_GetExternalIp();
+            QACTIVE_POST(AO_QueryEngine(), evt, NULL);
             status_ = Q_HANDLED();
             break;
         }

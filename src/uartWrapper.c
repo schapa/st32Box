@@ -25,7 +25,6 @@ static UART_HandleTypeDef *s_Uart4 = NULL;
 static uint32_t s_uart4BufferFlushTimer = INVALID_HANDLE;
 
 static void handleUart4_RX(UART_HandleTypeDef *huart);
-static _Bool isTerminal(char symb);
 static size_t countValidChars(char *buffer, size_t size);
 static void onBufferFlush(void *data);
 
@@ -139,15 +138,9 @@ static void handleUart4_RX(UART_HandleTypeDef *huart) {
 	_Bool send = false;
 	if (huart->RxXferSize) {
 		if (++currentPos < BUFFER_SIZE) {
-			if (isTerminal(buffer[currentPos-1])) {
+			if (Char_isTerminal(buffer[currentPos-1])) {
 				if (currentPos == 1) {
-					currentPos = 0;
 				} else if (countValidChars(buffer, currentPos)) {
-					send = true;
-					currentPos--;
-				}
-			} else if (currentPos == 2) { /* corner case for "> " */
-				if (buffer[0] == '>' && buffer[1] == ' ') {
 					send = true;
 				}
 			}
@@ -174,16 +167,12 @@ static void handleUart4_RX(UART_HandleTypeDef *huart) {
 	HAL_UART_Receive_IT(huart, (uint8_t*)&buffer[currentPos], 1);
 }
 
-static _Bool isTerminal(char symb) {
-	return (symb == '\n') || (symb == '\r');
-}
-
 static size_t countValidChars(char *buffer, size_t size) {
 	size_t i;
 	size_t sumbs = 0;
 	if (buffer && size) {
 		for (i = 0; i < size; i++) {
-			if ((isTerminal(buffer[i])) || (buffer[i] == ' '))
+			if ((Char_isTerminal(buffer[i])) || (buffer[i] == ' '))
 				continue;
 			sumbs++;
 		}

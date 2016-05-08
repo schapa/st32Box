@@ -21,7 +21,7 @@
 #include "Events.h"
 #include "Query.h"
 
-enum BlinkySignals {
+enum QP_Signals {
     DUMMY_SIG = Q_USER_SIG,
     SYSTEM_SIG,
     TIMEOUT_SIG,

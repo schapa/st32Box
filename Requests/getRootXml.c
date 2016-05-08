@@ -69,6 +69,7 @@ static _Bool getRootDsc(Request_p req) {
 static _Bool getRootAck(Request_p req) {
 	systemConfig_p config = SystemConfig_get();
 	config->igd.isUPnPActive &= Parse_RootXML(req->rx.buff, req->rx.occupied, config->igd.ctrlUrl);
+	DBGMSG_H("Control URL [%s]", config->igd.ctrlUrl);
 	return true;
 }
 

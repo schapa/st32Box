@@ -85,8 +85,8 @@ if (config-&gt;discoveredApnsSize &amp;&amp; settings-&gt;knownApnsCount) {
     }
 }</entry>
       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-      <tran trig="QUERY_DONE" target="../../5">
-       <tran_glyph conn="61,15,1,3,17">
+      <tran trig="QUERY_DONE" target="../../5/4">
+       <tran_glyph conn="61,15,1,3,21">
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
@@ -98,11 +98,6 @@ if (config-&gt;discoveredApnsSize &amp;&amp; settings-&gt;knownApnsCount) {
      <state name="UPnP">
       <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-      <initial target="../5">
-       <initial_glyph conn="80,13,4,3,7,2">
-        <action box="0,-2,10,2"/>
-       </initial_glyph>
-      </initial>
       <state name="GetRootXml">
        <entry>DBGMSG_M(&quot;Entry&quot;);
 RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
@@ -111,7 +106,7 @@ QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
        <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
        <tran trig="QUERY_DONE">
         <action>DBGMSG_M(&quot;DONE&quot;);</action>
-        <choice target="../../../2">
+        <choice target="../../../1">
          <guard brief="ok">SystemConfig_get()-&gt;igd.isUPnPActive</guard>
          <choice_glyph conn="104,37,5,2,12,-4">
           <action box="1,-3,10,2"/>
@@ -136,10 +131,10 @@ QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
       <state name="CheckConnection">
        <entry>DBGMSG_M(&quot;Entry&quot;);
 RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
-evt-&gt;request = Request_GetRootXml();
+evt-&gt;request = Request_GetCheckConnection();
 QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
        <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-       <tran trig="QUERY_DONE" target="../../3">
+       <tran trig="QUERY_DONE" target="../../2">
         <tran_glyph conn="118,14,0,0,-2,8,2">
          <action box="-1,-4,10,2"/>
         </tran_glyph>
@@ -150,9 +145,12 @@ QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
        </state_glyph>
       </state>
       <state name="GetExtIP">
-       <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
+       <entry>DBGMSG_M(&quot;Entry&quot;);
+RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+evt-&gt;request = Request_GetExternalIp();
+QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
        <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-       <tran trig="QUERY_DONE" target="../../4">
+       <tran trig="QUERY_DONE" target="../../3">
         <tran_glyph conn="131,14,0,0,-2,9,2">
          <action box="0,-4,10,2"/>
         </tran_glyph>
@@ -177,7 +175,7 @@ evt-&gt;request = Request_GetUPnPDiscoverer();
 QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
        <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
        <tran trig="QUERY_DONE">
-        <choice target="../../../1">
+        <choice target="../../../0">
          <guard brief="upnp?">SystemConfig_get()-&gt;igd.isUPnPActive</guard>
          <choice_glyph conn="90,37,5,2,7,-4">
           <action box="1,-3,10,2"/>
@@ -313,12 +311,12 @@ BSP_espSend(me-&gt;request-&gt;tx.buff, me-&gt;request-&gt;tx.occupied);
 QTimeEvt_armX(&amp;me-&gt;stepTout, step-&gt;timeout, 0U);</entry>
       <exit>QTimeEvt_disarm(&amp;me-&gt;stepTout);</exit>
       <tran trig="NEW_DATA, NEW_DATA_TOUT">
-       <action>DBGMSG_H(&quot;%s&quot;, e-&gt;sig == NEW_DATA_SIG ? &quot;NEW_DATA_SIG&quot; : &quot;STEP_TIMEOUT_SIG&quot; );
+       <action>DBGMSG_H(&quot;%s&quot;, e-&gt;sig == NEW_DATA_SIG ? &quot;NEW_DATA_SIG&quot; : &quot;STEP_TIMEOUT_SIG&quot;);
 Step_p step = &amp;(me-&gt;request-&gt;steps[me-&gt;request-&gt;stepCurrent]);
 _Bool ackOk = false;
-if (e-&gt;sig == NEW_DATA_SIG) {
-//    DBGMSG_H(&quot;\r\n%s&quot;, me-&gt;request-&gt;rx.buff);
+if ((e-&gt;sig == NEW_DATA_SIG)) {
     handleNewBuffer(me-&gt;request, (SystemEvent*)e);
+//    DBGMSG_H(&quot;\r\n%s&quot;, me-&gt;request-&gt;rx.buff);
 }</action>
        <choice>
         <guard brief="ack?">isStepAck(me-&gt;request, &amp;ackOk)</guard>
@@ -417,7 +415,7 @@ QACTIVE_POST(AO_system(), Q_NEW(QEvt, QUERY_FAILED_SIG), NULL);</action>
 #include &quot;Events.h&quot;
 #include &quot;Query.h&quot;
 
-enum BlinkySignals {
+enum QP_Signals {
     DUMMY_SIG = Q_USER_SIG,
     SYSTEM_SIG,
     TIMEOUT_SIG,
@@ -559,14 +557,14 @@ static void handleNewBuffer(Request_p req, SystemEvent *evt) {
     char *buff = (char*)evt-&gt;event.data.uxart.buffer;
     size_t size = evt-&gt;event.data.uxart.size;
     if (buff &amp;&amp; size) {
-        char *start = MEMMAN_malloc(req-&gt;rx.occupied + size + 3);
-        memset((void*)start, 0, req-&gt;rx.occupied + size + 3);
+//        DBGMSG_H(&quot;\r\n[%s]&quot;, buff);
+        size_t sizeNew = req-&gt;rx.occupied + size + 1;
+        char *start = MEMMAN_malloc(sizeNew);
+        memset((void*)start, 0, sizeNew);
         char *ptr = start;
         if (req-&gt;rx.occupied) {
             memcpy((void*)start, (void*)req-&gt;rx.buff, req-&gt;rx.occupied);
             MEMMAN_free((void*)req-&gt;rx.buff);
-            start[req-&gt;rx.occupied++] = '\n';
-            start[req-&gt;rx.occupied++] = '\r';
             ptr = &amp;start[req-&gt;rx.occupied];
         }
         memcpy((void*)ptr, (void*)buff, size);
@@ -595,8 +593,10 @@ static _Bool isStepAck(Request_p req, _Bool *isOk) {
         }
         if (req-&gt;rx.occupied &gt;= ackOkSize) {
             char *ptr = (char*)&amp;req-&gt;rx.buff[req-&gt;rx.occupied - ackOkSize];
-            if (!strcmp(ptr, ackOk)) {
-                if ((req-&gt;rx.occupied &lt;= ackOkSize) || (*(ptr - 1) == '\r')) {
+            if (Char_isTerminal(req-&gt;rx.buff[req-&gt;rx.occupied-1]))
+                ptr--;
+            if (strstr(ptr, ackOk)) {
+                if ((req-&gt;rx.occupied &lt;= ackOkSize) || Char_isTerminal(*(ptr - 1))) {
                     *isOk = true;
                     result = true;
                     break;

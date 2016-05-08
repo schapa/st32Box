@@ -23,6 +23,6 @@ void BSP_espSend(const char *buff, size_t size);
 void Led_Red_SetState(FunctionalState state);
 void Led_Green_SetState(FunctionalState state);
 
-
+_Bool Char_isTerminal(char symb);
 
 #endif /* BSP_H_ */

@@ -84,6 +84,10 @@ void Led_Green_SetState(FunctionalState state) {
 	HAL_GPIO_WritePin(GPIOG, GPIO_PIN_13, val);
 }
 
+_Bool Char_isTerminal(char symb) {
+	return (symb == '\n') || (symb == '\r');
+}
+
 static void initGPIO_LED(void) {
 	__HAL_RCC_GPIOG_CLK_ENABLE();
 	GPIO_InitTypeDef iface = {
