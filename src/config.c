@@ -9,6 +9,7 @@
 
 static const credentials_t s_knownApns[] = {
 		{ "shapa", "jnghfdkzq" }
+//		{ "shapa", "jnghfdkzq1" }
 };
 
 static systemConfig_t s_defaultConfig = {

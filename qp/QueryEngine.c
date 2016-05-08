@@ -45,6 +45,7 @@ QActive * AO_QueryEngine(void) {
 void QueryEngine_ctor(QueryEngine * const me) {
     DBGMSG_M("Create");
     QActive_ctor(&me->super, Q_STATE_CAST(&QueryEngine_initial));
+    QTimeEvt_ctorX(&me->stepACKTout, &me->super, NEW_DATA_TOUT_SIG, 0U);
     QTimeEvt_ctorX(&me->stepTout, &me->super, STEP_TIMEOUT_SIG, 0U);
     QTimeEvt_ctorX(&me->queryTout, &me->super, QUERY_TIMEOUT_SIG, 0U);
     me->request = NULL;
@@ -182,33 +183,42 @@ QState QueryEngine_StepWaiting(QueryEngine * const me, QEvt const * const e) {
         /* ${System::QueryEngine::SM::Working::StepWaiting} */
         case Q_ENTRY_SIG: {
             DBGMSG_M("Entry");
+            Step_p step = &(me->request->steps[me->request->stepCurrent]);
             BSP_espSend(me->request->tx.buff, me->request->tx.occupied);
+            QTimeEvt_armX(&me->stepTout, step->timeout, 0U);
             status_ = Q_HANDLED();
             break;
         }
-        /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_TIMEOUT} */
+        /* ${System::QueryEngine::SM::Working::StepWaiting} */
+        case Q_EXIT_SIG: {
+            QTimeEvt_disarm(&me->stepTout);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, NEW_DATA_TOUT} */
         case NEW_DATA_SIG: /* intentionally fall through */
-        case STEP_TIMEOUT_SIG: {
+        case NEW_DATA_TOUT_SIG: {
             DBGMSG_H("%s", e->sig == NEW_DATA_SIG ? "NEW_DATA_SIG" : "STEP_TIMEOUT_SIG" );
             Step_p step = &(me->request->steps[me->request->stepCurrent]);
             _Bool ackOk = false;
             if (e->sig == NEW_DATA_SIG) {
+            //    DBGMSG_H("\r\n%s", me->request->rx.buff);
                 handleNewBuffer(me->request, (SystemEvent*)e);
             }
-            /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_T~::[ack?]} */
+            /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, NEW_DA~::[ack?]} */
             if (isStepAck(me->request, &ackOk)) {
                 DBGMSG_M("Got Ack");
-                /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_T~::[ack?]::[OK]} */
+                /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, NEW_DA~::[ack?]::[OK]} */
                 if (ackOk) {
-                    /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_T~::[ack?]::[OK]::[Wait]} */
+                    /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, NEW_DA~::[ack?]::[OK]::[Wait]} */
                     if ((e->sig == NEW_DATA_SIG) && (step->falgs & STEP_FLAG_WAIT_TOUT)) {
-                        if (!me->stepTout.ctr) {
-                            DBGMSG_H("Waiting for %u ticks", step->timeout);
-                            QTimeEvt_armX(&me->stepTout, step->timeout, 0U);
+                        if (!me->stepACKTout.ctr) {
+                            DBGMSG_H("Waiting for %u ticks", step->timeoutACK);
+                            QTimeEvt_armX(&me->stepACKTout, step->timeoutACK, 0U);
                         }
                         status_ = Q_HANDLED();
                     }
-                    /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_T~::[ack?]::[OK]::[else]} */
+                    /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, NEW_DA~::[ack?]::[OK]::[else]} */
                     else {
                         DBGMSG_H("Successed: %u", me->request->stepCurrent);
                         if (step->success) {
@@ -221,7 +231,7 @@ QState QueryEngine_StepWaiting(QueryEngine * const me, QEvt const * const e) {
                         status_ = Q_TRAN(&QueryEngine_StepInit);
                     }
                 }
-                /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, STEP_T~::[ack?]::[err]} */
+                /* ${System::QueryEngine::SM::Working::StepWaiting::NEW_DATA, NEW_DA~::[ack?]::[err]} */
                 else {
                     DBGMSG_H("Fail: %u\n\r%s", me->request->stepCurrent, me->request->tx.buff);
 
@@ -231,6 +241,11 @@ QState QueryEngine_StepWaiting(QueryEngine * const me, QEvt const * const e) {
             else {
                 status_ = Q_UNHANDLED();
             }
+            break;
+        }
+        /* ${System::QueryEngine::SM::Working::StepWaiting::STEP_TIMEOUT} */
+        case STEP_TIMEOUT_SIG: {
+            status_ = Q_TRAN(&QueryEngine_StepFailed);
             break;
         }
         default: {
@@ -252,13 +267,14 @@ QState QueryEngine_StepFailed(QueryEngine * const me, QEvt const * const e) {
             if (step->fail) {
                 step->fail(me->request);
             }
-            QACTIVE_POST(AO_QueryEngine(), Q_NEW(QEvt, STEP_FAILED_SIG), NULL);
+            QACTIVE_POST(AO_QueryEngine(), Q_NEW(QEvt, QUERY_FAILED_SIG), NULL);
             status_ = Q_HANDLED();
             break;
         }
-        /* ${System::QueryEngine::SM::Working::StepFailed::STEP_FAILED} */
-        case STEP_FAILED_SIG: {
-            DBGMSG_M("STEP_FAILED");
+        /* ${System::QueryEngine::SM::Working::StepFailed::QUERY_FAILED} */
+        case QUERY_FAILED_SIG: {
+            DBGMSG_M("QUERY_FAILED");
+            QACTIVE_POST(AO_system(), Q_NEW(QEvt, QUERY_FAILED_SIG), NULL);
             status_ = Q_TRAN(&QueryEngine_Idle);
             break;
         }

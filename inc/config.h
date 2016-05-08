@@ -25,8 +25,8 @@ typedef struct {
 	uint16_t externalPort;
 	_Bool isUPnPActive;
 
-	uint32_t selfIp;
-	uint64_t selfMac;
+	uint8_t selfIp[4];
+	uint8_t selfMac[6];
 } systemConfig_t, *systemConfig_p;
 
 systemConfig_p SystemConfig_get(void);

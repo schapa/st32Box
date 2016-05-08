@@ -27,13 +27,13 @@ static _Bool closeUpdBroadcast (Request_p req);
 
 static const char *upnpDiscoverer = "M-SEARCH * HTTP/1.1\r\nHOST:239.255.255.250:1900\r\nMAN:\"ssdp:discover\"\r\nST:ssdp:all\r\nMX:3\r\n\r\n";
 
-static Step_t s_steps[] = {
-	{ setMultipleMode, 				NULL, 				NULL, 0, 0, NULL },
-	{ openUpdBroadcast, 			NULL, 				NULL, 0, 0, NULL },
-	{ prepareToSend, 				NULL, 				NULL, 0, 0, "> " },
-	{ sendUPnPDiscover, 			NULL, 				NULL, 0, 0, "SEND OK" },
-	{ NULL, 						uPnPDiscoverAck, 	NULL, STEP_FLAG_WAIT_TOUT, 1*BSP_TICKS_PER_SECOND, NULL },
-	{ closeUpdBroadcast, 			NULL, 				NULL, 0, 0, NULL },
+static const Step_t s_steps[] = {
+	{ setMultipleMode, 				NULL, 				NULL, 0, STEP_DEF_TOUT, 0, NULL },
+	{ openUpdBroadcast, 			NULL, 				NULL, 0, STEP_DEF_TOUT, 0, NULL },
+	{ prepareToSend, 				NULL, 				NULL, 0, STEP_DEF_TOUT, 0, "> " },
+	{ sendUPnPDiscover, 			NULL, 				NULL, 0, STEP_DEF_TOUT, 0, "SEND OK" },
+	{ NULL, 						uPnPDiscoverAck, 	NULL, STEP_FLAG_WAIT_TOUT,  STEP_DEF_TOUT, 1*BSP_TICKS_PER_SECOND, NULL },
+	{ closeUpdBroadcast, 			NULL, 				NULL, 0, STEP_DEF_TOUT, 0, NULL },
 };
 
 Request_p Request_GetUPnPDiscoverer(void) {

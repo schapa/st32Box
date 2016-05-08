@@ -27,6 +27,7 @@ enum BlinkySignals {
     TIMEOUT_SIG,
     NEW_REQUEST_SIG,
     NEW_DATA_SIG,
+    NEW_DATA_TOUT_SIG,
     STEP_NEXT_SIG,
     STEP_FAILED_SIG,
     STEP_TIMEOUT_SIG,

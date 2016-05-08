@@ -23,11 +23,11 @@ static _Bool modeChange (Request_p req);
 static _Bool listAccessPoints (Request_p req);
 static _Bool parseAccessPointsList (Request_p req);
 
-static Step_t s_steps[] = {
-	{ restartModule, 	NULL, 					NULL, 0, 0, "ready" },
-	{ echoOff, 			NULL, 					NULL, 0, 0, NULL },
-	{ modeChange, 		NULL, 					NULL, 0, 0, NULL },
-	{ listAccessPoints, parseAccessPointsList, 	NULL, 0, 0, NULL },
+static const Step_t s_steps[] = {
+	{ restartModule, 	NULL, 					NULL, 0, STEP_DEF_TOUT, 0, "ready" },
+	{ echoOff, 			NULL, 					NULL, 0, STEP_DEF_TOUT, 0, NULL },
+	{ modeChange, 		NULL, 					NULL, 0, STEP_DEF_TOUT, 0, NULL },
+	{ listAccessPoints, parseAccessPointsList, 	NULL, 0, STEP_DEF_TOUT, 0, NULL },
 };
 
 Request_p Request_GetInitial(void) {

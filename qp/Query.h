@@ -11,8 +11,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "bsp.h"
 
 #define CRLF "\r\n"
+#define STEP_DEF_TOUT (5*60*BSP_TICKS_PER_SECOND)
 
 typedef enum {
 	STEP_FLAG_WAIT_TOUT = (1<<0),
@@ -36,6 +38,7 @@ typedef struct {
 	_Bool (*fail) (Request_p req);
 	StepFlags_t falgs;
 	uint32_t timeout;
+	uint32_t timeoutACK;
 	const char *acknowledge; /* Success acknowledge string. if Null - "OK" */
 } Step_t, *Step_p;
 

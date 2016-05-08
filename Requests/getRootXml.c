@@ -25,10 +25,10 @@ static _Bool getRootAck(Request_p req);
 
 static const char *s_getRootStr = "GET /rootDesc.xml\r\n\r\n";
 
-static Step_t s_steps[] = {
-	{ openTCP, 						NULL, 				NULL, 0, 0, NULL },
-	{ prepareRoot, 					NULL, 				NULL, 0, 0, NULL },
-	{ getRootDsc,		 			getRootAck, 		NULL, 0, 0, "0,CLOSED" }
+static const Step_t s_steps[] = {
+	{ openTCP, 						NULL, 				NULL, 0, STEP_DEF_TOUT, 0, NULL },
+	{ prepareRoot, 					NULL, 				NULL, 0, STEP_DEF_TOUT, 0, NULL },
+	{ getRootDsc,		 			getRootAck, 		NULL, 0, STEP_DEF_TOUT, 0, "0,CLOSED" }
 };
 
 Request_p Request_GetRootXml(void) {

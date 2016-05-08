@@ -72,13 +72,19 @@ QState Engine_Working(Engine * const me, QEvt const * const e) {
         }
         /* ${System::Engine::SM::Working::SYSTEM} */
         case SYSTEM_SIG: {
-            HandleSysEvt(e);
+            HandleSysEvt((SystemEvent*)e);
             status_ = Q_HANDLED();
             break;
         }
         /* ${System::Engine::SM::Working::TIMEOUT} */
         case TIMEOUT_SIG: {
             status_ = Q_TRAN(&Engine_Init);
+            break;
+        }
+        /* ${System::Engine::SM::Working::QUERY_FAILED} */
+        case QUERY_FAILED_SIG: {
+            DBGMSG_ERR("QUERY_FAILED");
+            status_ = Q_TRAN(&Engine_Working);
             break;
         }
         default: {
@@ -214,13 +220,19 @@ QState Engine_GetRootXml(Engine * const me, QEvt const * const e) {
             DBGMSG_M("Entry");
             RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
             evt->request = Request_GetRootXml();
-            QACTIVE_POST(AO_QueryEngine(), evt, NULL);
+            //QACTIVE_POST(AO_QueryEngine(), evt, NULL);
             status_ = Q_HANDLED();
             break;
         }
         /* ${System::Engine::SM::Working::GetRootXml} */
         case Q_EXIT_SIG: {
             DBGMSG_M("Exit");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::GetRootXml::QUERY_DONE} */
+        case QUERY_DONE_SIG: {
+            DBGMSG_M("DONE");
             status_ = Q_HANDLED();
             break;
         }

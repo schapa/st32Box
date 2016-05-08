@@ -11,7 +11,7 @@ QActive_ctor(&amp;me-&gt;super, Q_STATE_CAST(&amp;Engine_initial));
 QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
    </operation>
    <statechart>
-    <initial target="../1/2">
+    <initial target="../1/3">
      <action>(void)e;
 //QTimeEvt_armX(&amp;me-&gt;timeEvt, BSP_TICKS_PER_SECOND/2U, BSP_TICKS_PER_SECOND/2U);</action>
      <initial_glyph conn="4,2,5,0,14,7">
@@ -22,13 +22,19 @@ QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
      <entry>DBGMSG_M(&quot;Q_ENTRY&quot;);</entry>
      <exit>DBGMSG_M(&quot;Q_EXIT&quot;);</exit>
      <tran trig="SYSTEM">
-      <action>HandleSysEvt(e);</action>
+      <action>HandleSysEvt((SystemEvent*)e);</action>
       <tran_glyph conn="4,38,3,-1,11">
        <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
-     <tran trig="TIMEOUT" target="../2">
+     <tran trig="TIMEOUT" target="../3">
       <tran_glyph conn="4,19,3,3,6">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="QUERY_FAILED" target="..">
+      <action>DBGMSG_ERR(&quot;QUERY_FAILED&quot;);</action>
+      <tran_glyph conn="4,32,3,3,-2,-5,2">
        <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
@@ -38,7 +44,7 @@ RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
 evt-&gt;request = Request_GetInitial();
 QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-      <tran trig="QUERY_DONE" target="../../3">
+      <tran trig="QUERY_DONE" target="../../4">
        <tran_glyph conn="31,16,1,3,6">
         <action box="0,-2,10,2"/>
        </tran_glyph>
@@ -78,7 +84,7 @@ if (config-&gt;discoveredApnsSize &amp;&amp; config-&gt;knownApnsCount) {
     }
 }</entry>
       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-      <tran trig="QUERY_DONE" target="../../4">
+      <tran trig="QUERY_DONE" target="../../5">
        <tran_glyph conn="58,16,1,3,6">
         <action box="0,-2,10,2"/>
        </tran_glyph>
@@ -94,7 +100,7 @@ RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
 evt-&gt;request = Request_GetUPnPDiscoverer();
 QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-      <tran trig="QUERY_DONE" target="../../5">
+      <tran trig="QUERY_DONE" target="../../6">
        <tran_glyph conn="75,28,2,0,5">
         <action box="-6,-2,10,2"/>
        </tran_glyph>
@@ -108,8 +114,14 @@ QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
       <entry>DBGMSG_M(&quot;Entry&quot;);
 RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
 evt-&gt;request = Request_GetRootXml();
-QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
+//QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
+      <tran trig="QUERY_DONE">
+       <action>DBGMSG_M(&quot;DONE&quot;);</action>
+       <tran_glyph conn="64,43,3,-1,-7">
+        <action box="-4,-2,10,2"/>
+       </tran_glyph>
+      </tran>
       <state_glyph node="64,33,21,19">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
@@ -131,9 +143,11 @@ QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
    <attribute name="stepTout" type="QTimeEvt" visibility="0x02" properties="0x00"/>
    <attribute name="queryTout" type="QTimeEvt" visibility="0x02" properties="0x00"/>
    <attribute name="request" type="Request_p" visibility="0x02" properties="0x00"/>
+   <attribute name="stepACKTout" type="QTimeEvt" visibility="0x02" properties="0x00"/>
    <operation name="ctor" type="void" visibility="0x00" properties="0x00">
     <code>DBGMSG_M(&quot;Create&quot;);
 QActive_ctor(&amp;me-&gt;super, Q_STATE_CAST(&amp;QueryEngine_initial));
+QTimeEvt_ctorX(&amp;me-&gt;stepACKTout, &amp;me-&gt;super, NEW_DATA_TOUT_SIG, 0U);
 QTimeEvt_ctorX(&amp;me-&gt;stepTout, &amp;me-&gt;super, STEP_TIMEOUT_SIG, 0U);
 QTimeEvt_ctorX(&amp;me-&gt;queryTout, &amp;me-&gt;super, QUERY_TIMEOUT_SIG, 0U);
 me-&gt;request = NULL;</code>
@@ -217,12 +231,16 @@ if (me-&gt;request-&gt;stepCurrent &lt; me-&gt;request-&gt;stepsCount) {
      </state>
      <state name="StepWaiting">
       <entry>DBGMSG_M(&quot;Entry&quot;);
-BSP_espSend(me-&gt;request-&gt;tx.buff, me-&gt;request-&gt;tx.occupied);</entry>
-      <tran trig="NEW_DATA, STEP_TIMEOUT">
+Step_p step = &amp;(me-&gt;request-&gt;steps[me-&gt;request-&gt;stepCurrent]);
+BSP_espSend(me-&gt;request-&gt;tx.buff, me-&gt;request-&gt;tx.occupied);
+QTimeEvt_armX(&amp;me-&gt;stepTout, step-&gt;timeout, 0U);</entry>
+      <exit>QTimeEvt_disarm(&amp;me-&gt;stepTout);</exit>
+      <tran trig="NEW_DATA, NEW_DATA_TOUT">
        <action>DBGMSG_H(&quot;%s&quot;, e-&gt;sig == NEW_DATA_SIG ? &quot;NEW_DATA_SIG&quot; : &quot;STEP_TIMEOUT_SIG&quot; );
 Step_p step = &amp;(me-&gt;request-&gt;steps[me-&gt;request-&gt;stepCurrent]);
 _Bool ackOk = false;
 if (e-&gt;sig == NEW_DATA_SIG) {
+//    DBGMSG_H(&quot;\r\n%s&quot;, me-&gt;request-&gt;rx.buff);
     handleNewBuffer(me-&gt;request, (SystemEvent*)e);
 }</action>
        <choice>
@@ -246,9 +264,9 @@ me-&gt;request-&gt;stepCurrent++;</action>
          </choice>
          <choice>
           <guard brief="Wait">(e-&gt;sig == NEW_DATA_SIG) &amp;&amp; (step-&gt;falgs &amp; STEP_FLAG_WAIT_TOUT)</guard>
-          <action>if (!me-&gt;stepTout.ctr) {
-    DBGMSG_H(&quot;Waiting for %u ticks&quot;, step-&gt;timeout);
-    QTimeEvt_armX(&amp;me-&gt;stepTout, step-&gt;timeout, 0U);
+          <action>if (!me-&gt;stepACKTout.ctr) {
+    DBGMSG_H(&quot;Waiting for %u ticks&quot;, step-&gt;timeoutACK);
+    QTimeEvt_armX(&amp;me-&gt;stepACKTout, step-&gt;timeoutACK, 0U);
 }</action>
           <choice_glyph conn="32,44,5,-1,-7">
            <action box="-5,0,10,2"/>
@@ -274,8 +292,14 @@ me-&gt;request-&gt;stepCurrent++;</action>
         <action box="-4,2,10,2"/>
        </tran_glyph>
       </tran>
+      <tran trig="STEP_TIMEOUT" target="../../4">
+       <tran_glyph conn="50,32,1,3,13,-6,2">
+        <action box="0,-2,12,2"/>
+       </tran_glyph>
+      </tran>
       <state_glyph node="34,26,16,11">
        <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
      <state name="StepFailed">
@@ -285,9 +309,10 @@ me-&gt;request-&gt;state = QUERY_FAILED;
 if (step-&gt;fail) {
     step-&gt;fail(me-&gt;request);
 }
-QACTIVE_POST(AO_QueryEngine(), Q_NEW(QEvt, STEP_FAILED_SIG), NULL);</entry>
-      <tran trig="STEP_FAILED" target="../../../1">
-       <action>DBGMSG_M(&quot;STEP_FAILED&quot;);</action>
+QACTIVE_POST(AO_QueryEngine(), Q_NEW(QEvt, QUERY_FAILED_SIG), NULL);</entry>
+      <tran trig="QUERY_FAILED" target="../../../1">
+       <action>DBGMSG_M(&quot;QUERY_FAILED&quot;);
+QACTIVE_POST(AO_system(), Q_NEW(QEvt, QUERY_FAILED_SIG), NULL);</action>
        <tran_glyph conn="70,10,0,0,-8,-53,2">
         <action box="-10,-8,10,2"/>
        </tran_glyph>
@@ -321,6 +346,7 @@ enum BlinkySignals {
     TIMEOUT_SIG,
     NEW_REQUEST_SIG,
     NEW_DATA_SIG,
+    NEW_DATA_TOUT_SIG,
     STEP_NEXT_SIG,
     STEP_FAILED_SIG,
     STEP_TIMEOUT_SIG,

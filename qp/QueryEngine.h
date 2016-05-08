@@ -32,6 +32,7 @@ typedef struct {
     QTimeEvt stepTout;
     QTimeEvt queryTout;
     Request_p request;
+    QTimeEvt stepACKTout;
 } QueryEngine;
 
 /* public: */

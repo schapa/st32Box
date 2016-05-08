@@ -8,7 +8,7 @@
 #include "Query.h"
 #include "requests.h"
 #include "parsers.h"
-#include "config.h"
+#include "bsp.h"
 #include <string.h>
 #include <stddef.h>
 #include "dbg_base.h"
@@ -24,9 +24,9 @@ static _Bool getMyAdressOk (Request_p req);
 static char *s_ssid = NULL;
 static char *s_passwd = NULL;
 
-static Step_t s_steps[] = {
-	{ startConnect, 				NULL, 				NULL, 0, 0, NULL },
-	{ getMyAdress, 					getMyAdressOk, 		NULL, 0, 0, NULL },
+static const Step_t s_steps[] = {
+	{ startConnect, 				NULL, 				NULL, 0, 20*BSP_TICKS_PER_SECOND, 0, NULL },
+	{ getMyAdress, 					getMyAdressOk, 		NULL, 0, STEP_DEF_TOUT, 0, NULL },
 };
 
 Request_p Request_GetConnect(char *ssid, char *passwd) {
@@ -57,6 +57,8 @@ static _Bool getMyAdress (Request_p req) {
 
 static _Bool getMyAdressOk (Request_p req) {
 	systemConfig_p config = SystemConfig_get();
-	Parse_IP(req->rx.buff, req->rx.occupied, &config->selfIp, &config->selfMac);
+	Parse_IP(req->rx.buff, req->rx.occupied, config->selfIp, config->selfMac);
+	DBGMSG_H("IP [%d.%d.%d.%d], MAC [%x:%x:%x:%x:%x:%x]", config->selfIp[3], config->selfIp[2], config->selfIp[1], config->selfIp[0],
+			config->selfMac[5], config->selfMac[4], config->selfMac[3], config->selfMac[2], config->selfMac[1], config->selfMac[0]);
 	return true;
 }
