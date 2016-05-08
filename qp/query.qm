@@ -14,7 +14,7 @@ QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
     <initial target="../1/3">
      <action>(void)e;
 //QTimeEvt_armX(&amp;me-&gt;timeEvt, BSP_TICKS_PER_SECOND/2U, BSP_TICKS_PER_SECOND/2U);</action>
-     <initial_glyph conn="4,2,5,0,14,7">
+     <initial_glyph conn="4,2,5,0,17,6">
       <action box="0,-2,10,2"/>
      </initial_glyph>
     </initial>
@@ -23,18 +23,18 @@ QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
      <exit>DBGMSG_M(&quot;Q_EXIT&quot;);</exit>
      <tran trig="SYSTEM">
       <action>HandleSysEvt((SystemEvent*)e);</action>
-      <tran_glyph conn="4,38,3,-1,11">
+      <tran_glyph conn="7,37,3,-1,11">
        <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
      <tran trig="TIMEOUT" target="../3">
-      <tran_glyph conn="4,19,3,3,6">
+      <tran_glyph conn="7,18,3,3,6">
        <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
      <tran trig="QUERY_FAILED" target="..">
       <action>DBGMSG_ERR(&quot;QUERY_FAILED&quot;);</action>
-      <tran_glyph conn="4,32,3,3,-2,-5,2">
+      <tran_glyph conn="7,31,3,3,-2,-5,2">
        <action box="0,-2,10,2"/>
       </tran_glyph>
      </tran>
@@ -45,11 +45,11 @@ evt-&gt;request = Request_GetInitial();
 QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
       <tran trig="QUERY_DONE" target="../../4">
-       <tran_glyph conn="31,16,1,3,6">
+       <tran_glyph conn="34,15,1,3,6">
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="10,9,21,19">
+      <state_glyph node="13,8,21,19">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
@@ -57,16 +57,17 @@ QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
      <state name="Connect">
       <entry>DBGMSG_M(&quot;Entry&quot;);
 systemConfig_p config = SystemConfig_get();
-if (config-&gt;discoveredApnsSize &amp;&amp; config-&gt;knownApnsCount) {
+nonVolatileSettings_p settings = SystemConfig_get()-&gt;settings;
+if (config-&gt;discoveredApnsSize &amp;&amp; settings-&gt;knownApnsCount) {
     size_t i, j;
     size_t matchCount = 0;
     size_t matchIdx = -1;
-    DBGMSG_M(&quot;Credentials/Found %d/%d&quot;, config-&gt;knownApnsCount, config-&gt;discoveredApnsSize);
-    for (i = 0; i &lt; config-&gt;knownApnsCount; i++) {
+    DBGMSG_M(&quot;Credentials/Found %d/%d&quot;, settings-&gt;knownApnsCount, config-&gt;discoveredApnsSize);
+    for (i = 0; i &lt; settings-&gt;knownApnsCount; i++) {
         for (j = 0; j &lt; config-&gt;discoveredApnsSize; j++) {
-            DBGMSG_H(&quot;[%s] == [%s]&quot;, config-&gt;knownApns[i].ssid, config-&gt;discoveredApns[j].ssid);
-            if (!strcmp(config-&gt;knownApns[i].ssid, config-&gt;discoveredApns[j].ssid)) {
-                DBGMSG_H(&quot; Match %d [%s]&quot;, i, config-&gt;knownApns[i].ssid);
+            DBGMSG_H(&quot;[%s] == [%s]&quot;, settings-&gt;knownApns[i].ssid, config-&gt;discoveredApns[j].ssid);
+            if (!strcmp(settings-&gt;knownApns[i].ssid, config-&gt;discoveredApns[j].ssid)) {
+                DBGMSG_H(&quot; Match %d [%s]&quot;, i, settings-&gt;knownApns[i].ssid);
                 matchIdx = i;
                 matchCount++;
             }
@@ -75,8 +76,8 @@ if (config-&gt;discoveredApnsSize &amp;&amp; config-&gt;knownApnsCount) {
     if (matchCount) {
         if (matchCount == 1) {
            RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
-           evt-&gt;request = Request_GetConnect(config-&gt;knownApns[matchIdx].ssid, config-&gt;knownApns[matchIdx].passwd);
-           DBGMSG_H(&quot;Connect To &lt;%s&gt;:&lt;%s&gt;&quot;, config-&gt;knownApns[matchIdx].ssid, config-&gt;knownApns[matchIdx].passwd);
+           evt-&gt;request = Request_GetConnect(settings-&gt;knownApns[matchIdx].ssid, settings-&gt;knownApns[matchIdx].passwd);
+           DBGMSG_H(&quot;Connect To &lt;%s&gt;:&lt;%s&gt;&quot;, settings-&gt;knownApns[matchIdx].ssid, settings-&gt;knownApns[matchIdx].passwd);
            QACTIVE_POST(AO_QueryEngine(), evt, NULL);
         } else {
             DBGMSG_ERR(&quot;TODO: implement multiple credentials&quot;);
@@ -85,54 +86,130 @@ if (config-&gt;discoveredApnsSize &amp;&amp; config-&gt;knownApnsCount) {
 }</entry>
       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
       <tran trig="QUERY_DONE" target="../../5">
-       <tran_glyph conn="58,16,1,3,6">
+       <tran_glyph conn="61,15,1,3,17">
         <action box="0,-2,10,2"/>
        </tran_glyph>
       </tran>
-      <state_glyph node="37,9,21,19">
+      <state_glyph node="40,8,21,19">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state name="UPnPDiscoverer">
-      <entry>DBGMSG_M(&quot;Entry&quot;);
+     <state name="UPnP">
+      <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
+      <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
+      <initial target="../5">
+       <initial_glyph conn="80,13,4,3,7,2">
+        <action box="0,-2,10,2"/>
+       </initial_glyph>
+      </initial>
+      <state name="GetRootXml">
+       <entry>DBGMSG_M(&quot;Entry&quot;);
+RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+evt-&gt;request = Request_GetRootXml();
+QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
+       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
+       <tran trig="QUERY_DONE">
+        <action>DBGMSG_M(&quot;DONE&quot;);</action>
+        <choice target="../../../2">
+         <guard brief="ok">SystemConfig_get()-&gt;igd.isUPnPActive</guard>
+         <choice_glyph conn="104,37,5,2,12,-4">
+          <action box="1,-3,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice>
+         <guard brief="no">else</guard>
+         <action>DBGMSG_WARN(&quot;UPnP no Ctrl Url&quot;);</action>
+         <choice_glyph conn="104,37,4,-1,9">
+          <action box="-3,1,4,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="104,33,2,-1,4">
+         <action box="-6,-2,10,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="96,14,12,19">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state name="CheckConnection">
+       <entry>DBGMSG_M(&quot;Entry&quot;);
+RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+evt-&gt;request = Request_GetRootXml();
+QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
+       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
+       <tran trig="QUERY_DONE" target="../../3">
+        <tran_glyph conn="118,14,0,0,-2,8,2">
+         <action box="-1,-4,10,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="110,14,11,19">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state name="GetExtIP">
+       <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
+       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
+       <tran trig="QUERY_DONE" target="../../4">
+        <tran_glyph conn="131,14,0,0,-2,9,2">
+         <action box="0,-4,10,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="123,14,11,19">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state name="OpenPort">
+       <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
+       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
+       <state_glyph node="136,14,11,19">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state name="UPnPDiscoverer">
+       <entry>DBGMSG_M(&quot;Entry&quot;);
 RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
 evt-&gt;request = Request_GetUPnPDiscoverer();
 QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
-      <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-      <tran trig="QUERY_DONE" target="../../6">
-       <tran_glyph conn="75,28,2,0,5">
-        <action box="-6,-2,10,2"/>
-       </tran_glyph>
-      </tran>
-      <state_glyph node="64,9,21,19">
+       <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
+       <tran trig="QUERY_DONE">
+        <choice target="../../../1">
+         <guard brief="upnp?">SystemConfig_get()-&gt;igd.isUPnPActive</guard>
+         <choice_glyph conn="90,37,5,2,7,-4">
+          <action box="1,-3,10,2"/>
+         </choice_glyph>
+        </choice>
+        <choice>
+         <guard brief="no">else</guard>
+         <action>DBGMSG_WARN(&quot;UPnP not Found IGD&quot;);</action>
+         <choice_glyph conn="90,37,4,-1,9">
+          <action box="-3,1,4,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="90,33,2,-1,4">
+         <action box="-7,-2,10,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="82,14,12,19">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="78,8,88,34">
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
      </state>
-     <state name="GetRootXml">
-      <entry>DBGMSG_M(&quot;Entry&quot;);
-RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
-evt-&gt;request = Request_GetRootXml();
-//QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
-      <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-      <tran trig="QUERY_DONE">
-       <action>DBGMSG_M(&quot;DONE&quot;);</action>
-       <tran_glyph conn="64,43,3,-1,-7">
-        <action box="-4,-2,10,2"/>
-       </tran_glyph>
-      </tran>
-      <state_glyph node="64,33,21,19">
-       <entry box="1,2,6,2"/>
-       <exit box="1,4,6,2"/>
-      </state_glyph>
-     </state>
-     <state_glyph node="4,5,84,55">
+     <state_glyph node="7,2,165,57">
       <entry box="1,2,6,2"/>
       <exit box="1,4,6,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="130,61"/>
+    <state_diagram size="176,61"/>
    </statechart>
   </class>
   <class name="SystemEvent" superclass="qpc::QEvt">
@@ -326,7 +403,7 @@ QACTIVE_POST(AO_system(), Q_NEW(QEvt, QUERY_FAILED_SIG), NULL);</action>
       <exit box="1,4,6,2"/>
      </state_glyph>
     </state>
-    <state_diagram size="80,50"/>
+    <state_diagram size="85,54"/>
    </statechart>
   </class>
   <class name="RequestEvent" superclass="qpc::QEvt">

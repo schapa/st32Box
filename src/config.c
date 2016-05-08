@@ -11,12 +11,15 @@ static const credentials_t s_knownApns[] = {
 		{ "shapa", "jnghfdkzq" }
 //		{ "shapa", "jnghfdkzq1" }
 };
-
-static systemConfig_t s_defaultConfig = {
-		NULL, 0,
+static const nonVolatileSettings_t s_settings = {
 		s_knownApns, sizeof(s_knownApns)/sizeof(*s_knownApns),
 		8266,
-		true
+};
+static systemConfig_t s_defaultConfig = {
+		NULL, 0,
+		&s_settings,
+		{0}, {0},
+		{ 0 }
 };
 
 static systemConfig_p s_userConfig = NULL;

@@ -25,7 +25,17 @@ static _Bool sendUPnPDiscover (Request_p req);
 static _Bool uPnPDiscoverAck (Request_p req);
 static _Bool closeUpdBroadcast (Request_p req);
 
-static const char *upnpDiscoverer = "M-SEARCH * HTTP/1.1\r\nHOST:239.255.255.250:1900\r\nMAN:\"ssdp:discover\"\r\nST:ssdp:all\r\nMX:3\r\n\r\n";
+static const char *upnpDiscoverer = "M-SEARCH * HTTP/1.1"CRLF
+		"HOST:239.255.255.250:1900"CRLF
+		"ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1"CRLF
+		"MAN:\"ssdp:discover\""CRLF
+		"MX: 2"CRLF
+		CRLF;
+//M-SEARCH * HTTP/1.1
+//HOST: 239.255.255.250:1900
+//ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1
+//MAN: "ssdp:discover"
+//MX: 2
 
 static const Step_t s_steps[] = {
 	{ setMultipleMode, 				NULL, 				NULL, 0, STEP_DEF_TOUT, 0, NULL },
@@ -73,7 +83,8 @@ static _Bool sendUPnPDiscover (Request_p req) {
 }
 
 static _Bool uPnPDiscoverAck (Request_p req) {
-	DBGMSG_M("[UPnP]\n\r%s", req->rx.buff);
+	systemConfig_p config = SystemConfig_get();
+	config->igd.isUPnPActive = Parse_UPnP(req->rx.buff, req->rx.occupied, config->igd.ip, &config->igd.port, config->igd.rootUrl);
 	return true;
 }
 

@@ -33,5 +33,7 @@ typedef struct {
  */
 _Bool Parse_APN(const char *buffer, size_t size, WIFI_APN_p *pApns, size_t *apnsCount);
 _Bool Parse_IP(const char *buffer, size_t size, uint8_t *pIp, uint8_t *pMac);
+_Bool Parse_UPnP(const char *buffer, size_t size, uint8_t *pIp, uint16_t *pPort, char *uri);
+_Bool Parse_RootXML(const char *buffer, size_t size, char *url);
 
 #endif /* PARSERS_H_ */

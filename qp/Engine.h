@@ -78,6 +78,10 @@ QState Engine_initial(Engine * const me, QEvt const * const e);
 QState Engine_Working(Engine * const me, QEvt const * const e);
 QState Engine_Init(Engine * const me, QEvt const * const e);
 QState Engine_Connect(Engine * const me, QEvt const * const e);
-QState Engine_UPnPDiscoverer(Engine * const me, QEvt const * const e);
+QState Engine_UPnP(Engine * const me, QEvt const * const e);
 QState Engine_GetRootXml(Engine * const me, QEvt const * const e);
+QState Engine_CheckConnection(Engine * const me, QEvt const * const e);
+QState Engine_GetExtIP(Engine * const me, QEvt const * const e);
+QState Engine_OpenPort(Engine * const me, QEvt const * const e);
+QState Engine_UPnPDiscoverer(Engine * const me, QEvt const * const e);
 

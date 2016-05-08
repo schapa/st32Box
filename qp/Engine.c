@@ -133,16 +133,17 @@ QState Engine_Connect(Engine * const me, QEvt const * const e) {
         case Q_ENTRY_SIG: {
             DBGMSG_M("Entry");
             systemConfig_p config = SystemConfig_get();
-            if (config->discoveredApnsSize && config->knownApnsCount) {
+            nonVolatileSettings_p settings = SystemConfig_get()->settings;
+            if (config->discoveredApnsSize && settings->knownApnsCount) {
                 size_t i, j;
                 size_t matchCount = 0;
                 size_t matchIdx = -1;
-                DBGMSG_M("Credentials/Found %d/%d", config->knownApnsCount, config->discoveredApnsSize);
-                for (i = 0; i < config->knownApnsCount; i++) {
+                DBGMSG_M("Credentials/Found %d/%d", settings->knownApnsCount, config->discoveredApnsSize);
+                for (i = 0; i < settings->knownApnsCount; i++) {
                     for (j = 0; j < config->discoveredApnsSize; j++) {
-                        DBGMSG_H("[%s] == [%s]", config->knownApns[i].ssid, config->discoveredApns[j].ssid);
-                        if (!strcmp(config->knownApns[i].ssid, config->discoveredApns[j].ssid)) {
-                            DBGMSG_H(" Match %d [%s]", i, config->knownApns[i].ssid);
+                        DBGMSG_H("[%s] == [%s]", settings->knownApns[i].ssid, config->discoveredApns[j].ssid);
+                        if (!strcmp(settings->knownApns[i].ssid, config->discoveredApns[j].ssid)) {
+                            DBGMSG_H(" Match %d [%s]", i, settings->knownApns[i].ssid);
                             matchIdx = i;
                             matchCount++;
                         }
@@ -151,8 +152,8 @@ QState Engine_Connect(Engine * const me, QEvt const * const e) {
                 if (matchCount) {
                     if (matchCount == 1) {
                        RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
-                       evt->request = Request_GetConnect(config->knownApns[matchIdx].ssid, config->knownApns[matchIdx].passwd);
-                       DBGMSG_H("Connect To <%s>:<%s>", config->knownApns[matchIdx].ssid, config->knownApns[matchIdx].passwd);
+                       evt->request = Request_GetConnect(settings->knownApns[matchIdx].ssid, settings->knownApns[matchIdx].passwd);
+                       DBGMSG_H("Connect To <%s>:<%s>", settings->knownApns[matchIdx].ssid, settings->knownApns[matchIdx].passwd);
                        QACTIVE_POST(AO_QueryEngine(), evt, NULL);
                     } else {
                         DBGMSG_ERR("TODO: implement multiple credentials");
@@ -170,6 +171,34 @@ QState Engine_Connect(Engine * const me, QEvt const * const e) {
         }
         /* ${System::Engine::SM::Working::Connect::QUERY_DONE} */
         case QUERY_DONE_SIG: {
+            status_ = Q_TRAN(&Engine_UPnP);
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&Engine_Working);
+            break;
+        }
+    }
+    return status_;
+}
+/*${System::Engine::SM::Working::UPnP} .....................................*/
+QState Engine_UPnP(Engine * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${System::Engine::SM::Working::UPnP} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnP} */
+        case Q_EXIT_SIG: {
+            DBGMSG_M("Exit");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnP::initial} */
+        case Q_INIT_SIG: {
             status_ = Q_TRAN(&Engine_UPnPDiscoverer);
             break;
         }
@@ -180,11 +209,133 @@ QState Engine_Connect(Engine * const me, QEvt const * const e) {
     }
     return status_;
 }
-/*${System::Engine::SM::Working::UPnPDiscoverer} ...........................*/
+/*${System::Engine::SM::Working::UPnP::GetRootXml} .........................*/
+QState Engine_GetRootXml(Engine * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${System::Engine::SM::Working::UPnP::GetRootXml} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+            evt->request = Request_GetRootXml();
+            QACTIVE_POST(AO_QueryEngine(), evt, NULL);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnP::GetRootXml} */
+        case Q_EXIT_SIG: {
+            DBGMSG_M("Exit");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnP::GetRootXml::QUERY_DONE} */
+        case QUERY_DONE_SIG: {
+            DBGMSG_M("DONE");
+            /* ${System::Engine::SM::Working::UPnP::GetRootXml::QUERY_DONE::[ok]} */
+            if (SystemConfig_get()->igd.isUPnPActive) {
+                status_ = Q_TRAN(&Engine_CheckConnection);
+            }
+            /* ${System::Engine::SM::Working::UPnP::GetRootXml::QUERY_DONE::[no]} */
+            else {
+                DBGMSG_WARN("UPnP no Ctrl Url");
+                status_ = Q_HANDLED();
+            }
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&Engine_UPnP);
+            break;
+        }
+    }
+    return status_;
+}
+/*${System::Engine::SM::Working::UPnP::CheckConnection} ....................*/
+QState Engine_CheckConnection(Engine * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${System::Engine::SM::Working::UPnP::CheckConnection} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+            evt->request = Request_GetRootXml();
+            QACTIVE_POST(AO_QueryEngine(), evt, NULL);
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnP::CheckConnection} */
+        case Q_EXIT_SIG: {
+            DBGMSG_M("Exit");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnP::CheckConnection::QUERY_DONE} */
+        case QUERY_DONE_SIG: {
+            status_ = Q_TRAN(&Engine_GetExtIP);
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&Engine_UPnP);
+            break;
+        }
+    }
+    return status_;
+}
+/*${System::Engine::SM::Working::UPnP::GetExtIP} ...........................*/
+QState Engine_GetExtIP(Engine * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${System::Engine::SM::Working::UPnP::GetExtIP} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnP::GetExtIP} */
+        case Q_EXIT_SIG: {
+            DBGMSG_M("Exit");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnP::GetExtIP::QUERY_DONE} */
+        case QUERY_DONE_SIG: {
+            status_ = Q_TRAN(&Engine_OpenPort);
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&Engine_UPnP);
+            break;
+        }
+    }
+    return status_;
+}
+/*${System::Engine::SM::Working::UPnP::OpenPort} ...........................*/
+QState Engine_OpenPort(Engine * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        /* ${System::Engine::SM::Working::UPnP::OpenPort} */
+        case Q_ENTRY_SIG: {
+            DBGMSG_M("Entry");
+            status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnP::OpenPort} */
+        case Q_EXIT_SIG: {
+            DBGMSG_M("Exit");
+            status_ = Q_HANDLED();
+            break;
+        }
+        default: {
+            status_ = Q_SUPER(&Engine_UPnP);
+            break;
+        }
+    }
+    return status_;
+}
+/*${System::Engine::SM::Working::UPnP::UPnPDiscoverer} .....................*/
 QState Engine_UPnPDiscoverer(Engine * const me, QEvt const * const e) {
     QState status_;
     switch (e->sig) {
-        /* ${System::Engine::SM::Working::UPnPDiscoverer} */
+        /* ${System::Engine::SM::Working::UPnP::UPnPDiscoverer} */
         case Q_ENTRY_SIG: {
             DBGMSG_M("Entry");
             RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
@@ -193,51 +344,27 @@ QState Engine_UPnPDiscoverer(Engine * const me, QEvt const * const e) {
             status_ = Q_HANDLED();
             break;
         }
-        /* ${System::Engine::SM::Working::UPnPDiscoverer} */
+        /* ${System::Engine::SM::Working::UPnP::UPnPDiscoverer} */
         case Q_EXIT_SIG: {
             DBGMSG_M("Exit");
             status_ = Q_HANDLED();
             break;
         }
-        /* ${System::Engine::SM::Working::UPnPDiscoverer::QUERY_DONE} */
+        /* ${System::Engine::SM::Working::UPnP::UPnPDiscoverer::QUERY_DONE} */
         case QUERY_DONE_SIG: {
-            status_ = Q_TRAN(&Engine_GetRootXml);
+            /* ${System::Engine::SM::Working::UPnP::UPnPDiscoverer::QUERY_DONE::[upnp?]} */
+            if (SystemConfig_get()->igd.isUPnPActive) {
+                status_ = Q_TRAN(&Engine_GetRootXml);
+            }
+            /* ${System::Engine::SM::Working::UPnP::UPnPDiscoverer::QUERY_DONE::[no]} */
+            else {
+                DBGMSG_WARN("UPnP not Found IGD");
+                status_ = Q_HANDLED();
+            }
             break;
         }
         default: {
-            status_ = Q_SUPER(&Engine_Working);
-            break;
-        }
-    }
-    return status_;
-}
-/*${System::Engine::SM::Working::GetRootXml} ...............................*/
-QState Engine_GetRootXml(Engine * const me, QEvt const * const e) {
-    QState status_;
-    switch (e->sig) {
-        /* ${System::Engine::SM::Working::GetRootXml} */
-        case Q_ENTRY_SIG: {
-            DBGMSG_M("Entry");
-            RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
-            evt->request = Request_GetRootXml();
-            //QACTIVE_POST(AO_QueryEngine(), evt, NULL);
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${System::Engine::SM::Working::GetRootXml} */
-        case Q_EXIT_SIG: {
-            DBGMSG_M("Exit");
-            status_ = Q_HANDLED();
-            break;
-        }
-        /* ${System::Engine::SM::Working::GetRootXml::QUERY_DONE} */
-        case QUERY_DONE_SIG: {
-            DBGMSG_M("DONE");
-            status_ = Q_HANDLED();
-            break;
-        }
-        default: {
-            status_ = Q_SUPER(&Engine_Working);
+            status_ = Q_SUPER(&Engine_UPnP);
             break;
         }
     }

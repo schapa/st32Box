@@ -23,12 +23,13 @@ static _Bool prepareRoot(Request_p req);
 static _Bool getRootDsc(Request_p req);
 static _Bool getRootAck(Request_p req);
 
-static const char *s_getRootStr = "GET /rootDesc.xml\r\n\r\n";
+static const char *s_getRootStrPattern = "GET /%s\r\n\r\n";
 
 static const Step_t s_steps[] = {
 	{ openTCP, 						NULL, 				NULL, 0, STEP_DEF_TOUT, 0, NULL },
 	{ prepareRoot, 					NULL, 				NULL, 0, STEP_DEF_TOUT, 0, NULL },
-	{ getRootDsc,		 			getRootAck, 		NULL, 0, STEP_DEF_TOUT, 0, "0,CLOSED" }
+	{ getRootDsc,		 			NULL, 				NULL, 0, STEP_DEF_TOUT, 0, "SEND OK" },
+	{ NULL,				 			getRootAck, 		NULL, 0, STEP_DEF_TOUT, 0, "0,CLOSED" }
 };
 
 Request_p Request_GetRootXml(void) {
@@ -45,21 +46,29 @@ Request_p Request_GetRootXml(void) {
 
 static _Bool openTCP(Request_p req) {
 	char *buff = (char*)req->tx.buff;
-	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPSTART=0,\"TCP\",\"192.168.1.1\",39201"CRLF);
+	systemConfig_p config = SystemConfig_get();
+	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPSTART=0,\"TCP\",\"%d.%d.%d.%d\",%d"CRLF,
+			config->igd.ip[3], config->igd.ip[2], config->igd.ip[1], config->igd.ip[0], config->igd.port);
 	return true;
 }
 static _Bool prepareRoot(Request_p req) {
 	char *buff = (char*)req->tx.buff;
-	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPSEND=0,%d"CRLF, strlen(s_getRootStr));
+	systemConfig_p config = SystemConfig_get();
+	size_t len = snprintf(buff, req->tx.size, s_getRootStrPattern, config->igd.rootUrl);
+	req->tx.occupied = snprintf(buff, req->tx.size, "AT+CIPSEND=0,%d"CRLF, len);
 	return true;
 }
 static _Bool getRootDsc(Request_p req) {
 	char *buff = (char*)req->tx.buff;
-	req->tx.occupied = snprintf(buff, req->tx.size, "%s"CRLF, s_getRootStr);
+	systemConfig_p config = SystemConfig_get();
+	req->tx.occupied = snprintf(buff, req->tx.size, s_getRootStrPattern, config->igd.rootUrl);
+	strcat((char*)s_getRootStrPattern, CRLF);
+	req->tx.occupied += strlen(CRLF);
 	return true;
 }
 static _Bool getRootAck(Request_p req) {
-	DBGMSG_M("[Roo]\n\r%s", req->rx.buff);
+	systemConfig_p config = SystemConfig_get();
+	config->igd.isUPnPActive &= Parse_RootXML(req->rx.buff, req->rx.occupied, config->igd.ctrlUrl);
 	return true;
 }
 
