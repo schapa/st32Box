@@ -313,6 +313,9 @@ QState Engine_OpenPort(Engine * const me, QEvt const * const e) {
         /* ${System::Engine::SM::Working::UPnP::OpenPort} */
         case Q_ENTRY_SIG: {
             DBGMSG_M("Entry");
+            RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+            evt->request = Request_GetOpenPort();
+            QACTIVE_POST(AO_QueryEngine(), evt, NULL);
             status_ = Q_HANDLED();
             break;
         }
@@ -320,6 +323,11 @@ QState Engine_OpenPort(Engine * const me, QEvt const * const e) {
         case Q_EXIT_SIG: {
             DBGMSG_M("Exit");
             status_ = Q_HANDLED();
+            break;
+        }
+        /* ${System::Engine::SM::Working::UPnP::OpenPort::QUERY_DONE} */
+        case QUERY_DONE_SIG: {
+            status_ = Q_TRAN(&Engine_Ok);
             break;
         }
         default: {
@@ -363,6 +371,17 @@ QState Engine_UPnPDiscoverer(Engine * const me, QEvt const * const e) {
         }
         default: {
             status_ = Q_SUPER(&Engine_UPnP);
+            break;
+        }
+    }
+    return status_;
+}
+/*${System::Engine::SM::Working::Ok} .......................................*/
+QState Engine_Ok(Engine * const me, QEvt const * const e) {
+    QState status_;
+    switch (e->sig) {
+        default: {
+            status_ = Q_SUPER(&Engine_Working);
             break;
         }
     }

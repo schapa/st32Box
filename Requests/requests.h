@@ -18,7 +18,7 @@ Request_p Request_GetUPnPDiscoverer(void);
 Request_p Request_GetRootXml(void);
 Request_p Request_GetCheckConnection(void);
 Request_p Request_GetExternalIp(void);
-
+Request_p Request_GetOpenPort(void);
 
 extern const char *s_httpPostSoap;
 

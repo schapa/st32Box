@@ -49,7 +49,7 @@ void BSP_init(void) {
 	HELP_dumpCANProps(pCan1Bus);
 
 	System_setStatus(INFORM_IDLE);
-	System_setLedControl(Led_Green_SetState);
+	System_setLedControl(BSP_LedGreenSet);
 
 	EXTI_baseInit();
 	PWM_Init();
@@ -74,12 +74,12 @@ void BSP_espSend(const char *buff, size_t size) {
 	HAL_UART_Transmit_IT(&s_espUart, buff, size);
 }
 
-void Led_Red_SetState(FunctionalState state) {
+void BSP_LedRedSet(FunctionalState state) {
 	GPIO_PinState val = (state == DISABLE) ? GPIO_PIN_RESET : GPIO_PIN_SET;
 	HAL_GPIO_WritePin(GPIOG, GPIO_PIN_14, val);
 }
 
-void Led_Green_SetState(FunctionalState state) {
+void BSP_LedGreenSet(FunctionalState state) {
 	GPIO_PinState val = (state == DISABLE) ? GPIO_PIN_RESET : GPIO_PIN_SET;
 	HAL_GPIO_WritePin(GPIOG, GPIO_PIN_13, val);
 }

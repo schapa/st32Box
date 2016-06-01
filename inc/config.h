@@ -35,6 +35,7 @@ typedef struct {
 		_Bool isUPnPActive;
 		_Bool isConnected;
 	    uint8_t ip[4];
+	    uint8_t externIp[4];
 	    uint16_t port;
 	    char rootUrl[64];
 	    char ctrlUrl[64];

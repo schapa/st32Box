@@ -84,4 +84,5 @@ QState Engine_CheckConnection(Engine * const me, QEvt const * const e);
 QState Engine_GetExtIP(Engine * const me, QEvt const * const e);
 QState Engine_OpenPort(Engine * const me, QEvt const * const e);
 QState Engine_UPnPDiscoverer(Engine * const me, QEvt const * const e);
+QState Engine_Ok(Engine * const me, QEvt const * const e);
 

@@ -196,9 +196,9 @@ _Bool Parse_UPnP(const char *buffer, size_t size, uint8_t *pIp, uint16_t *pPort,
 		    DBGMSG_M("Loc [%s]", ptr);
 		    int ip[4];
 		    int port;
-			int val = sscanf(ptr, "%d.%d.%d.%d:%d/%s", &ip[3], &ip[2], &ip[1], &ip[0], &port, uri);
+			sscanf(ptr, "%d.%d.%d.%d:%d/%s", &ip[3], &ip[2], &ip[1], &ip[0], &port, uri);
 			for (i = 0; i < 4; i++)
-					pIp[i] = ip[i];
+				pIp[i] = ip[i];
 			*pPort = port;
 			result = true;
 		} else {
@@ -270,7 +270,6 @@ _Bool Parse_RootXML(const char *buffer, size_t size, char *url) {
 	return result;
 }
 
-#include "dbg_trace.h"
 _Bool Parse_ConnectionStatus(const char *buffer, size_t size, _Bool *isOk) {
 	_Bool result = false;
 	static const char *tag = "<NewConnectionStatus>";
@@ -291,4 +290,30 @@ _Bool Parse_ConnectionStatus(const char *buffer, size_t size, _Bool *isOk) {
 
     DBGMSG_M("%s", result ? "Ok" : "Fail");
 	return result;
+}
+
+#include "dbg_trace.h"
+_Bool Parse_ExternalIp(const char *buffer, size_t size, uint8_t *pIp) {
+	_Bool result = false;
+	static const char *tag = "<NewExternalIPAddress>";
+	const size_t tagLen = strlen(tag);
+
+	do {
+		if (!buffer || !size || !pIp) {
+		    DBGMSG_ERR("Invalid input");
+		    break;
+		}
+		char *ptr = strstr((char*)buffer, tag);
+		if (ptr) {
+			int i, ip[4];
+			ptr += tagLen;
+			sscanf(ptr, "%d.%d.%d.%d", &ip[3], &ip[2], &ip[1], &ip[0]);
+			for (i = 0; i < 4; i++)
+				pIp[i] = ip[i];
+			result = true;
+		}
+	} while (0);
+
+    DBGMSG_M("%s", result ? "Ok" : "Fail");
+    return result;
 }

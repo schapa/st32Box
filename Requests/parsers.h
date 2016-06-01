@@ -36,5 +36,6 @@ _Bool Parse_IP(const char *buffer, size_t size, uint8_t *pIp, uint8_t *pMac);
 _Bool Parse_UPnP(const char *buffer, size_t size, uint8_t *pIp, uint16_t *pPort, char *uri);
 _Bool Parse_RootXML(const char *buffer, size_t size, char *url);
 _Bool Parse_ConnectionStatus(const char *buffer, size_t size, _Bool *isOk);
+_Bool Parse_ExternalIp(const char *buffer, size_t size, uint8_t *pIp);
 
 #endif /* PARSERS_H_ */

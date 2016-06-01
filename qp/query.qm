@@ -161,9 +161,17 @@ QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
        </state_glyph>
       </state>
       <state name="OpenPort">
-       <entry>DBGMSG_M(&quot;Entry&quot;);</entry>
+       <entry>DBGMSG_M(&quot;Entry&quot;);
+RequestEvent *evt = Q_NEW(RequestEvent, NEW_REQUEST_SIG);
+evt-&gt;request = Request_GetOpenPort();
+QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
        <exit>DBGMSG_M(&quot;Exit&quot;);</exit>
-       <state_glyph node="136,14,11,19">
+       <tran trig="QUERY_DONE" target="../../../6">
+        <tran_glyph conn="144,33,2,1,15,-77">
+         <action box="-7,-2,10,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="136,14,12,19">
         <entry box="1,2,6,2"/>
         <exit box="1,4,6,2"/>
        </state_glyph>
@@ -201,6 +209,9 @@ QACTIVE_POST(AO_QueryEngine(), evt, NULL);</entry>
        <entry box="1,2,6,2"/>
        <exit box="1,4,6,2"/>
       </state_glyph>
+     </state>
+     <state name="Ok">
+      <state_glyph node="53,36,14,14"/>
      </state>
      <state_glyph node="7,2,165,57">
       <entry box="1,2,6,2"/>
